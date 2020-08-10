@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -6,21 +7,21 @@ import 'package:inventory/screens/inventory/inventory.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:oauth2_client/oauth2_helper.dart';
 import 'package:oauth2_client/google_oauth2_client.dart';
-import 'dart:io';
-import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
+
+import 'model/file_data.dart';
 
 final List<String> allowedExtensions = [
   'xlsx',
   'ods',
   'gsheet',
+  'html',
 ];
 
 String _androidClientId =
     '870429610804-87oatltl467p76ba1hb2nbpg7he3hbc6.apps.googleusercontent.com';
 String _iosClientId =
     '870429610804-3ni7p17b5rmmml3qi5j5auqrn728j5kg.apps.googleusercontent.com';
-
-var _scopes = ['https://www.googleapis.com/auth/drive.readonly'];
+List<String> _scopes = ['https://www.googleapis.com/auth/drive.readonly'];
 
 final List<String> allowedMimeTypes = allowedExtensions
     .map(
@@ -119,7 +120,7 @@ Future<List> futureFiles;
 //  }
 //}
 
-Future<http.Response> getApiResponse({
+Future<http.Response> getGoogleApiResponse({
   String unencodedPath = '',
   Map<String, String> queryParameters,
 }) async {
@@ -147,7 +148,7 @@ Future<List> list({
   @required bool filterWithQuery,
   @required String filter,
 }) async {
-  http.Response resp = await getApiResponse(
+  http.Response resp = await getGoogleApiResponse(
     queryParameters: {
       'q': "(mimeType = 'application/vnd.google-apps.folder' or " +
           "${allowedMimeTypes.join(" or ")}) and " +
@@ -158,11 +159,16 @@ Future<List> list({
   return fileList['files'];
 }
 
-Future<SpreadsheetDecoder> download(String fileId, String mime) async {
+Future<FileData> download({
+  @required String fileId,
+  @required String mime,
+  @required String provider,
+  @required String name,
+}) async {
   http.Response resp;
 
   if (mime == mimeFromExtension('gsheet')) {
-    resp = await getApiResponse(
+    resp = await getGoogleApiResponse(
       unencodedPath: '/$fileId/export',
       queryParameters: {
         'alt': 'media',
@@ -170,7 +176,7 @@ Future<SpreadsheetDecoder> download(String fileId, String mime) async {
       },
     );
   } else {
-    resp = await getApiResponse(
+    resp = await getGoogleApiResponse(
       unencodedPath: '/$fileId',
       queryParameters: {
         'alt': 'media',
@@ -193,9 +199,16 @@ Future<SpreadsheetDecoder> download(String fileId, String mime) async {
 //
 //  // spreadsheet to decoder
 //  var bytes = sheetFile.readAsBytesSync();
-  var decoder = SpreadsheetDecoder.decodeBytes(resp.bodyBytes, update: true);
+  var fileData = FileData(
+    provider: provider,
+    name: name,
+    id: fileId,
+    mimeType: mime,
+    bytes: resp.bodyBytes,
+  );
+  await fileData.save();
 
-  return decoder;
+  return fileData;
 }
 
 Widget results({
@@ -231,20 +244,25 @@ Widget results({
                         isFile ? Icons.file_download : Icons.folder,
                       ),
                       title: Text(name),
-                      onTap: () {
-                        if (isFile) {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (context) => Inventory(
-                                org: 'Google',
-                                file: file,
+                      onTap: () async {
+                        await internetTryCatch(() async {
+                          if (isFile) {
+                            var fileData = await download(
+                              fileId: id,
+                              mime: mime,
+                              provider: 'Google',
+                              name: name,
+                            );
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (context) => Inventory(fileData),
                               ),
-                            ),
-                            (route) => false,
-                          );
-                        } else {
-                          onFolderTap(id, name.replaceAll('/', ''));
-                        }
+                              (route) => false,
+                            );
+                          } else {
+                            onFolderTap(id, name.replaceAll('/', ''));
+                          }
+                        });
                       },
                     );
                   },

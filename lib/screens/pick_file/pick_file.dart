@@ -15,7 +15,7 @@ class PickFile extends StatelessWidget {
             fileId: 'root',
           )
         : option == 'DB'
-            ? DropboxChooser(
+            ? Dropbox(
                 fileName: 'Dropbox',
                 filePath: '',
               )

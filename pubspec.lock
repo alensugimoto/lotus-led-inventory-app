@@ -318,7 +318,7 @@ packages:
     source: hosted
     version: "0.2.0"
   html:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: html
       url: "https://pub.dartlang.org"
@@ -439,9 +439,11 @@ packages:
   oauth2_client:
     dependency: "direct main"
     description:
-      name: oauth2_client
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: "."
+      ref: HEAD
+      resolved-ref: "3a4a8f664586617f4a5693e2cf1250103b00f58f"
+      url: "https://github.com/alensugimoto/oauth2_client"
+    source: git
     version: "1.4.3"
   package_config:
     dependency: transitive

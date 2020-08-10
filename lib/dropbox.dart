@@ -1,243 +1,228 @@
-import 'dart:io';
+import 'dart:convert';
+import 'dart:async';
 
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
+import 'package:inventory/model/file_data.dart';
 import 'package:inventory/screens/inventory/inventory.dart';
-import 'dart:async';
+import 'package:meta/meta.dart';
+import 'package:mime_type/mime_type.dart';
+import 'package:oauth2_client/oauth2_client.dart';
+import 'package:oauth2_client/oauth2_helper.dart';
 import 'package:path/path.dart' as p;
-import 'package:dropbox_client/dropbox_client.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
-
-const String dropbox_clientId = 'flutter-dropbox';
-const String dropbox_key = '3ss8bafc9ujv2hx';
-const String dropbox_secret = 'oysrishvqq9wff5';
+import 'package:http/http.dart' as http;
 
 final List<String> allowedExtensions = [
   'xlsx',
   'ods',
+  'html',
 ];
 
-class DropboxChooser extends StatefulWidget {
+const String dropbox_key = '3ss8bafc9ujv2hx';
+const String dropbox_secret = 'oysrishvqq9wff5';
+
+Future<http.Response> getDropboxApiResponse({
+  @required bool isRPC,
+  String unencodedPath = '',
+  @required Map<String, String> queryParameters,
+}) async {
+  var helper = OAuth2Helper(
+    DropboxOAuth2Client(
+      customUriScheme: 'com.lotusledlights.merchandprice',
+      redirectUri: 'com.lotusledlights.merchandprice:/oauth2redirect',
+    ),
+  );
+
+  helper.setAuthorizationParams(
+    grantType: OAuth2Helper.AUTHORIZATION_CODE,
+    clientId: dropbox_key,
+    clientSecret: dropbox_secret,
+  );
+
+  var arg = json.encode(queryParameters);
+  http.Response resp = isRPC
+      ? await helper.post(
+          Uri.https(
+            'api.dropboxapi.com',
+            '/2/files$unencodedPath',
+          ).toString(),
+          body: arg,
+          headers: {'Content-Type': 'application/json'},
+        )
+      : await helper.post(
+          Uri.https(
+            'content.dropboxapi.com',
+            '/2/files$unencodedPath',
+          ).toString(),
+          headers: {'Dropbox-API-Arg': arg},
+        );
+
+  return resp;
+}
+
+Future<List> list({
+  @required bool filterWithQuery,
+  @required String filter,
+}) async {
+  if (filterWithQuery) {
+    http.Response resp = await getDropboxApiResponse(
+      isRPC: true,
+      unencodedPath: '/search_v2',
+      queryParameters: {'query': filter},
+    );
+    Map<String, dynamic> fileList = json.decode(resp.body);
+    print(resp.body);
+    return fileList['matches'].map((e) => e['metadata']['metadata']).toList();
+  } else {
+    http.Response resp = await getDropboxApiResponse(
+      isRPC: true,
+      unencodedPath: '/list_folder',
+      queryParameters: {'path': filter},
+    );
+    Map<String, dynamic> fileList = json.decode(resp.body);
+    print(resp.body);
+    return fileList['entries'];
+  }
+}
+
+Future<FileData> download({
+  @required String dropboxPath,
+  @required String fileName,
+  @required String provider,
+  @required String mime,
+}) async {
+  http.Response resp = await getDropboxApiResponse(
+    isRPC: false,
+    unencodedPath: '/download',
+    queryParameters: {
+      'path': dropboxPath,
+    },
+  );
+  var fileData = FileData(
+    provider: provider,
+    name: fileName,
+    id: dropboxPath,
+    mimeType: mime,
+    bytes: resp.bodyBytes,
+  );
+  await fileData.save();
+
+  return fileData;
+}
+
+Widget results({
+  @required Future<List> futureFiles,
+  @required void Function(String path, String name) onFolderTap,
+}) {
+  return FutureBuilder<List>(
+    future: futureFiles,
+    builder: (context, snapshot) {
+      if (snapshot.hasData) {
+        List list = snapshot.data;
+        return Container(
+          padding: EdgeInsets.all(5.0),
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
+          child: list.length == 0
+              ? Center(child: Text('No files found'))
+              : ListView.builder(
+                  itemCount: list.length,
+                  itemBuilder: (context, index) {
+                    Map item = list[index];
+                    final fileSize = item['size'];
+                    final path = item['path_lower'];
+                    bool isFile = false;
+                    bool isDownloadable = false;
+                    var name = item['name'];
+                    if (fileSize == null) {
+                      name += '/';
+                      isDownloadable = true;
+                    } else {
+                      isFile = true;
+                      for (var ext in allowedExtensions) {
+                        if (p.extension(name).replaceAll('.', '') == ext) {
+                          isDownloadable = true;
+                          break;
+                        }
+                      }
+                    }
+                    return ListTile(
+                      leading: Icon(
+                        isFile && isDownloadable
+                            ? Icons.file_download
+                            : isFile && !isDownloadable
+                                ? Icons.block
+                                : Icons.folder,
+                      ),
+                      title: Text(
+                        name,
+                        style: TextStyle(
+                          color: !isDownloadable ? Colors.grey : Colors.black,
+                        ),
+                      ),
+                      onTap: () async {
+                        if (isFile && !isDownloadable) {
+                          Flushbar(
+                            message: 'This file cannot be read.',
+                            duration: Duration(seconds: 3),
+                          )..show(context);
+                        } else {
+                          await internetTryCatch(() async {
+                            if (isFile && isDownloadable) {
+                              var fileData = await download(
+                                dropboxPath: path,
+                                fileName: name,
+                                provider: 'Dropbox',
+                                mime: mimeFromExtension(
+                                  p.extension(name).replaceAll('.', ''),
+                                ),
+                              );
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                  builder: (context) => Inventory(fileData),
+                                ),
+                                (route) => false,
+                              );
+                            } else {
+                              onFolderTap(path, name.replaceAll('/', ''));
+                            }
+                          });
+                        }
+                      },
+                    );
+                  },
+                ),
+        );
+      } else if (snapshot.hasError) {
+        return Center(child: Text("${snapshot.error}"));
+      }
+      return Center(child: CircularProgressIndicator());
+    },
+  );
+}
+
+class Dropbox extends StatefulWidget {
   final String filePath;
   final String fileName;
 
-  DropboxChooser({
+  Dropbox({
     @required this.filePath,
     @required this.fileName,
   });
 
   @override
-  DropboxChooserState createState() => DropboxChooserState();
+  DropboxState createState() => DropboxState();
 }
 
-class DropboxChooserState extends State<DropboxChooser> {
-  String accessToken;
+class DropboxState extends State<Dropbox> {
   Future<List> futureFiles;
 
   @override
   void initState() {
     super.initState();
-    initDropbox();
     futureFiles = list(
-      //filterWithQuery: false,
+      filterWithQuery: false,
       filter: widget.filePath,
-    );
-  }
-
-  Future initDropbox() async {
-    await Dropbox.init(dropbox_clientId, dropbox_key, dropbox_secret);
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    accessToken = prefs.getString('dropboxAccessToken');
-
-    setState(() {});
-  }
-
-  Future<bool> checkAuthorized(bool authorize) async {
-    final token = await Dropbox.getAccessToken();
-    if (token != null) {
-      if (accessToken == null || accessToken.isEmpty) {
-        accessToken = token;
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setString('dropboxAccessToken', accessToken);
-      }
-      return true;
-    }
-    if (authorize) {
-      if (accessToken != null && accessToken.isNotEmpty) {
-        await Dropbox.authorizeWithAccessToken(accessToken);
-        final token = await Dropbox.getAccessToken();
-        if (token != null) {
-          return true;
-        }
-      } else {
-        await Dropbox.authorize();
-        final token = await Dropbox.getAccessToken();
-        if (token != null) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  Future unlink() async {
-    await deleteAccessToken();
-    await Dropbox.unlink();
-  }
-
-  Future deleteAccessToken() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.remove('dropboxAccessToken');
-
-    setState(() {
-      accessToken = null;
-    });
-  }
-
-  Future<List> list({
-    //@required bool filterWithQuery,
-    @required String filter,
-  }) async {
-    if (await checkAuthorized(true)) {
-      final List result = await Dropbox.listFolder(filter);
-//    if (filterWithQuery) {
-//      for (int i = 0; i < result.length; i++) {
-//        if (result[i]['filesize'] == null) {
-//          result.addAll(await list(
-//            filter: result[i]['pathLower'],
-//            filterWithQuery: false,
-//          ));
-//        }
-//      }
-//      result.removeWhere((element) => !element.contains(filter));
-//    }
-//    result.removeWhere((element) => element['filesize'] != null
-//        ? !element['name'].endsWith('xlsx')
-//        : false);
-      return result;
-    }
-    return null;
-  }
-
-  Future uploadTest() async {
-    if (await checkAuthorized(true)) {
-      var tempDir = await getTemporaryDirectory();
-      var filepath = '${tempDir.path}/test_upload.txt';
-      File(filepath).writeAsStringSync(
-          'contents.. from ' + (Platform.isIOS ? 'iOS' : 'Android') + '\n');
-
-      final result =
-          await Dropbox.upload(filepath, '/test_upload.txt', (uploaded, total) {
-        print('progress $uploaded / $total');
-      });
-      print(result);
-    }
-  }
-
-  Future<SpreadsheetDecoder> downloadTest(
-      String dropboxPath, String fileName) async {
-    if (await checkAuthorized(true)) {
-      var tempDir = (await getTemporaryDirectory()).path;
-      var filepath = '$tempDir/$fileName';
-      await Dropbox.download(dropboxPath, filepath);
-      var bytes = File(filepath).readAsBytesSync();
-      var decoder = SpreadsheetDecoder.decodeBytes(bytes, update: true);
-      return decoder;
-    }
-    return null;
-  }
-
-  Future<String> getTemporaryLink(path) async {
-    final result = await Dropbox.getTemporaryLink(path);
-    return result;
-  }
-
-  Widget results({
-    @required Future<List> futureFiles,
-    @required void Function(String path, String name) onFolderTap,
-  }) {
-    return FutureBuilder<List>(
-      future: futureFiles,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          List list = snapshot.data;
-          return Container(
-            padding: EdgeInsets.all(5.0),
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            child: list.length == 0
-                ? Center(child: Text('No files found'))
-                : ListView.builder(
-                    itemCount: list.length,
-                    itemBuilder: (context, index) {
-                      Map item = list[index];
-                      final fileSize = item['filesize'];
-                      final path = item['pathLower'];
-                      bool isFile = false;
-                      bool isDownloadable = false;
-                      var name = item['name'];
-                      if (fileSize == null) {
-                        name += '/';
-                        isDownloadable = true;
-                      } else {
-                        isFile = true;
-                        for (var ext in allowedExtensions) {
-                          if (p.extension(name).replaceAll('.', '') == ext) {
-                            isDownloadable = true;
-                            break;
-                          }
-                        }
-                      }
-                      return ListTile(
-                        leading: Icon(
-                          isFile && isDownloadable
-                              ? Icons.file_download
-                              : isFile && !isDownloadable
-                                  ? Icons.block
-                                  : Icons.folder,
-                        ),
-                        title: Text(
-                          name,
-                          style: TextStyle(
-                            color: !isDownloadable ? Colors.grey : Colors.black,
-                          ),
-                        ),
-                        onTap: () async {
-                          if (isFile && isDownloadable) {
-                            Flushbar(
-                              message: 'Downloading...',
-                              duration: Duration(seconds: 3),
-                            )..show(context);
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                builder: (context) => Inventory(
-                                  org: 'Dropbox',
-                                  file: item,
-                                ),
-                              ),
-                              (route) => false,
-                            );
-                          } else if (isFile && !isDownloadable) {
-                            Flushbar(
-                              message: 'This file cannot be downloaded.',
-                              duration: Duration(seconds: 3),
-                            )..show(context);
-                          } else {
-                            onFolderTap(path, name.replaceAll('/', ''));
-                          }
-                        },
-                      );
-                    },
-                  ),
-          );
-        } else if (snapshot.hasError) {
-          return Center(child: Text("${snapshot.error}"));
-        }
-        return Center(child: CircularProgressIndicator());
-      },
     );
   }
 
@@ -253,7 +238,7 @@ class DropboxChooserState extends State<DropboxChooser> {
               onFolderTap: (String path, String name) {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => DropboxChooser(
+                    builder: (context) => Dropbox(
                       filePath: path,
                       fileName: name,
                     ),
@@ -335,3 +320,15 @@ class DropboxChooserState extends State<DropboxChooser> {
 //          );
 //  }
 //}
+
+class DropboxOAuth2Client extends OAuth2Client {
+  DropboxOAuth2Client({
+    @required String redirectUri,
+    @required String customUriScheme,
+  }) : super(
+          authorizeUrl: 'https://www.dropbox.com/oauth2/authorize',
+          tokenUrl: 'https://api.dropboxapi.com/oauth2/token',
+          redirectUri: redirectUri,
+          customUriScheme: customUriScheme,
+        );
+}
