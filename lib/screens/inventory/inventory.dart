@@ -71,6 +71,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       'xlsx',
       'ods',
       'html',
+      'htm',
     ];
 
     String filePath = await FilePicker.getFilePath(

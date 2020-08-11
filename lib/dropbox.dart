@@ -16,6 +16,7 @@ final List<String> allowedExtensions = [
   'xlsx',
   'ods',
   'html',
+  'htm',
 ];
 
 const String dropbox_key = '3ss8bafc9ujv2hx';

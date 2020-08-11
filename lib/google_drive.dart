@@ -15,6 +15,7 @@ final List<String> allowedExtensions = [
   'ods',
   'gsheet',
   'html',
+  'htm',
 ];
 
 String _androidClientId =
