@@ -36,7 +36,6 @@ dependencies:
   firebase_core: ^0.4.5
   firebase_analytics: ^5.0.16
   flutter_secure_storage: ^3.3.3
-  dropbox_client: ^0.7.1
   path_provider: ^1.6.11
   file_picker: ^1.13.0+1
   flutter_speed_dial: ^1.2.5
