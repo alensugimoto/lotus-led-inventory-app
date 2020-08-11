@@ -30,9 +30,6 @@ PODS:
   - DKPhotoGallery/Resource (0.0.17):
     - SDWebImage
     - SwiftyGif
-  - dropbox_client (0.5.1):
-    - Flutter
-    - ObjectiveDropboxOfficial
   - file_picker (0.0.1):
     - DKImagePickerController/PhotoGallery
     - Flutter
@@ -110,7 +107,6 @@ PODS:
     - nanopb/encode (= 1.30905.0)
   - nanopb/decode (1.30905.0)
   - nanopb/encode (1.30905.0)
-  - ObjectiveDropboxOfficial (5.0.2)
   - path_provider (0.0.1):
     - Flutter
   - PromisesObjC (1.2.10)
@@ -124,7 +120,6 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
-  - dropbox_client (from `.symlinks/plugins/dropbox_client/ios`)
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - firebase_analytics (from `.symlinks/plugins/firebase_analytics/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
@@ -148,14 +143,11 @@ SPEC REPOS:
     - GoogleDataTransport
     - GoogleUtilities
     - nanopb
-    - ObjectiveDropboxOfficial
     - PromisesObjC
     - SDWebImage
     - SwiftyGif
 
 EXTERNAL SOURCES:
-  dropbox_client:
-    :path: ".symlinks/plugins/dropbox_client/ios"
   file_picker:
     :path: ".symlinks/plugins/file_picker/ios"
   firebase_analytics:
@@ -178,7 +170,6 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   DKImagePickerController: b5eb7f7a388e4643264105d648d01f727110fc3d
   DKPhotoGallery: fdfad5125a9fdda9cc57df834d49df790dbb4179
-  dropbox_client: 584b57a73066f88ed26bdd5a31ea98b2c8f40871
   file_picker: 3e6c3790de664ccf9b882732d9db5eaf6b8d4eb1
   Firebase: 57957c8d6eb3d8b80a560b1dc58be24724b89ff2
   firebase_analytics: 9118044ffb98bee71d84733fc594f5134fe4bc1b
@@ -194,7 +185,6 @@ SPEC CHECKSUMS:
   GoogleDataTransport: af0c79193dc59acd37630b4833d0dc6912ae6bd5
   GoogleUtilities: e121a3867449ce16b0e35ddf1797ea7a389ffdf2
   nanopb: c43f40fadfe79e8b8db116583945847910cbabc9
-  ObjectiveDropboxOfficial: 554963fda023072edffb898b303032e1f8476ae6
   path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
   PromisesObjC: b14b1c6b68e306650688599de8a45e49fae81151
   SDWebImage: cf6922231e95550934da2ada0f20f2becf2ceba9
