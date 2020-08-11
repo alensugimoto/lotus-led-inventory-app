@@ -80,7 +80,6 @@ Future<List> list({
       queryParameters: {'path': filter},
     );
     Map<String, dynamic> fileList = json.decode(resp.body);
-    print(resp.body);
     return fileList['entries'];
   }
 }
@@ -169,7 +168,7 @@ Widget results({
                         } else {
                           await internetTryCatch(() async {
                             if (isFile && isDownloadable) {
-                              var fileData = await download(
+                              var futureFileData = download(
                                 dropboxPath: path,
                                 fileName: name,
                                 provider: 'Dropbox',
@@ -179,7 +178,25 @@ Widget results({
                               );
                               Navigator.of(context).pushAndRemoveUntil(
                                 MaterialPageRoute(
-                                  builder: (context) => Inventory(fileData),
+                                  builder: (context) => FutureBuilder(
+                                    future: futureFileData,
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData) {
+                                        return Inventory(snapshot.data);
+                                      } else if (snapshot.hasError) {
+                                        return Scaffold(
+                                          body: Center(
+                                            child: Text("${snapshot.error}"),
+                                          ),
+                                        );
+                                      }
+                                      return Scaffold(
+                                        body: Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
                                 (route) => false,
                               );

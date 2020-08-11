@@ -247,7 +247,7 @@ Widget results({
                       onTap: () async {
                         await internetTryCatch(() async {
                           if (isFile) {
-                            var fileData = await download(
+                            var futureFileData = download(
                               fileId: id,
                               mime: mime,
                               provider: 'Google',
@@ -255,7 +255,25 @@ Widget results({
                             );
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(
-                                builder: (context) => Inventory(fileData),
+                                builder: (context) => FutureBuilder(
+                                  future: futureFileData,
+                                  builder: (context, snapshot) {
+                                    if (snapshot.hasData) {
+                                      return Inventory(snapshot.data);
+                                    } else if (snapshot.hasError) {
+                                      return Scaffold(
+                                        body: Center(
+                                          child: Text("${snapshot.error}"),
+                                        ),
+                                      );
+                                    }
+                                    return Scaffold(
+                                      body: Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
                               (route) => false,
                             );
