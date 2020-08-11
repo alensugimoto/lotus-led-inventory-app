@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>870429610804-3ni7p17b5rmmml3qi5j5auqrn728j5kg.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.870429610804-3ni7p17b5rmmml3qi5j5auqrn728j5kg</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>870429610804-87oatltl467p76ba1hb2nbpg7he3hbc6.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyAyZeOt0evsYm2h9EMsWjru_NS6Ry7dGd0</string>
+	<key>GCM_SENDER_ID</key>
+	<string>870429610804</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.lotusledlights.merchandprice</string>
+	<key>PROJECT_ID</key>
+	<string>merch-and-price</string>
+	<key>STORAGE_BUCKET</key>
+	<string>merch-and-price.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:870429610804:ios:6d0706ce4c1d967d178b61</string>
+	<key>DATABASE_URL</key>
+	<string>https://merch-and-price.firebaseio.com</string>
+</dict>
+</plist>
