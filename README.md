@@ -1,4 +1,4 @@
-# inventory
+# merch-and-price-app
 
 A new Flutter application.
 
