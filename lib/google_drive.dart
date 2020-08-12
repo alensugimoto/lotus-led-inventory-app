@@ -3,11 +3,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:inventory/screens/inventory/inventory.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:oauth2_client/oauth2_helper.dart';
 import 'package:oauth2_client/google_oauth2_client.dart';
-
-import 'screens/inventory/inventory.dart';
 
 import 'model/file_data.dart';
 
