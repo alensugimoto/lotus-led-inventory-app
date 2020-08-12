@@ -3,14 +3,15 @@ import 'dart:async';
 
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
-import 'package:inventory/model/file_data.dart';
-import 'package:inventory/screens/inventory/inventory.dart';
 import 'package:meta/meta.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:oauth2_client/oauth2_client.dart';
 import 'package:oauth2_client/oauth2_helper.dart';
 import 'package:path/path.dart' as p;
 import 'package:http/http.dart' as http;
+
+import 'model/file_data.dart';
+import 'screens/inventory/inventory.dart';
 
 final List<String> allowedExtensions = [
   'xlsx',
