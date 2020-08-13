@@ -7,8 +7,8 @@ import 'package:mime_type/mime_type.dart';
 import 'package:oauth2_client/oauth2_helper.dart';
 import 'package:oauth2_client/google_oauth2_client.dart';
 
-import 'screens/inventory/inventory.dart';
-import 'model/file_data.dart';
+import '../inventory/inventory.dart';
+import '../../model/file_data.dart';
 
 final List<String> allowedExtensions = [
   'xlsx',

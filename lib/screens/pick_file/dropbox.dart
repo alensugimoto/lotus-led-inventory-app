@@ -10,8 +10,8 @@ import 'package:oauth2_client/oauth2_helper.dart';
 import 'package:path/path.dart' as p;
 import 'package:http/http.dart' as http;
 
-import 'model/file_data.dart';
-import 'screens/inventory/inventory.dart';
+import '../../model/file_data.dart';
+import '../inventory/inventory.dart';
 
 final List<String> allowedExtensions = [
   'xlsx',

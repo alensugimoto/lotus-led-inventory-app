@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../google_drive.dart';
-import '../../dropbox.dart';
+import 'google_drive.dart';
+import 'dropbox.dart';
 
 class PickFile extends StatelessWidget {
   final String option;
