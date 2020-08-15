@@ -117,49 +117,87 @@ class FittedText extends StatelessWidget {
     }
   }
 
+//  Widget textList(
+//    String text, {
+//    @required double fontSize,
+//    Color color,
+//  }) {
+//    List<String> words = text.trim().split(RegExp(r"\s+"));
+//    List<Widget> textWidgets = [];
+//    for (int i = 0; i < words.length; i++) {
+//      textWidgets.add(Flexible(
+//        child: Text(
+//          words[i] + (i == words.length ? '' : ' '),
+//          maxLines: 1,
+//          textAlign: textAlign,
+//          overflow: TextOverflow.ellipsis,
+//          style: TextStyle(
+//            color: color ?? Colors.black,
+//            fontSize: fontSize,
+//            fontWeight: fontWeight,
+//          ),
+//        ),
+//      ));
+//    }
+//    return Row(
+//      children: textWidgets,
+//    );
+//  }
+
   @override
   Widget build(BuildContext context) {
     String text = fittedTextText();
     String label = fittedTextText(true);
 
     return Tooltip(
-        message: label + text,
-        child: includeLabel
-            ? RichText(
-                maxLines: 1,
-                textAlign: textAlign,
-                overflow: TextOverflow.ellipsis,
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: label,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: fontSize / 1.5,
-                        fontWeight: fontWeight,
-                      ),
+      message: label + text,
+      child: includeLabel
+          ?
+//      textList(
+//              text,
+//              fontSize: fontSize,
+//            )
+          RichText(
+              maxLines: 1,
+              textAlign: textAlign,
+              overflow: TextOverflow.ellipsis,
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: label,
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: fontSize / 1.5,
+                      fontWeight: fontWeight,
                     ),
-                    TextSpan(
-                      text: text,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: fontSize,
-                        fontWeight: fontWeight,
-                      ),
+                  ),
+                  TextSpan(
+                    text: text,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: fontSize,
+                      fontWeight: fontWeight,
                     ),
-                  ],
-                ),
-              )
-            : Text(
-                text,
-                maxLines: 1,
-                textAlign: textAlign,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: fontSize,
-                  fontWeight: fontWeight,
-                ),
-              ));
+                  ),
+                ],
+              ),
+            )
+          :
+//      textList(
+//              text,
+//              fontSize: fontSize,
+//            ),
+          Text(
+              text,
+              maxLines: 1,
+              textAlign: textAlign,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: fontWeight,
+              ),
+            ),
+    );
 //    return FittedBox(
 //      alignment: Alignment.center,
 //      fit: BoxFit.scaleDown,
