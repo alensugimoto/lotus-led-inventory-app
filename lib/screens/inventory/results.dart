@@ -111,6 +111,7 @@ class _ResultsState extends State<Results>
                         horizontal: 6.0,
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           FittedText(
                             widget._filteredResults,
