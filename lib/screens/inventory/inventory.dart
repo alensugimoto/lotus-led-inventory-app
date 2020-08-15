@@ -265,9 +265,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   }
 
   Future<Null> _refresh() async {
-    await internetTryCatch(() async {
-      setSpread();
-    });
+    setSpread();
     await Future.delayed(Duration(seconds: 2));
     return null;
   }
@@ -285,8 +283,10 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
         message: 'Refresh',
         child: IconButton(
           icon: Icon(Icons.refresh),
-          onPressed: () {
-            _key.currentState.show();
+          onPressed: () async {
+            await internetTryCatch(() async {
+              _key.currentState.show();
+            });
           },
         ),
       ),
