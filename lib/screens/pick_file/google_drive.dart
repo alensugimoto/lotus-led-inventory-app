@@ -7,6 +7,7 @@ import 'package:mime_type/mime_type.dart';
 import 'package:oauth2_client/oauth2_helper.dart';
 import 'package:oauth2_client/google_oauth2_client.dart';
 
+import '../../wi_fi.dart';
 import '../inventory/inventory.dart';
 import '../../model/file_data.dart';
 
@@ -246,7 +247,7 @@ Widget results({
                       ),
                       title: Text(name),
                       onTap: () async {
-                        await internetTryCatch(() async {
+                        await WiFi().tryCatch(() async {
                           if (isFile) {
                             var futureFileData = download(
                               fileId: id,

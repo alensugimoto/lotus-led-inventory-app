@@ -11,6 +11,7 @@ import 'package:path/path.dart' as p;
 import 'package:http/http.dart' as http;
 
 import '../../model/file_data.dart';
+import '../../wi_fi.dart';
 import '../inventory/inventory.dart';
 
 final List<String> allowedExtensions = [
@@ -168,7 +169,7 @@ Widget results({
                             duration: Duration(seconds: 3),
                           )..show(context);
                         } else {
-                          await internetTryCatch(() async {
+                          await WiFi().tryCatch(() async {
                             if (isFile && isDownloadable) {
                               var futureFileData = download(
                                 dropboxPath: path,

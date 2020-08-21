@@ -8,7 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
 
-import '../../app.dart';
+import '../../wi_fi.dart';
 import 'fitted_text.dart';
 import 'results.dart';
 import '../pick_file/pick_file.dart';
@@ -20,35 +20,6 @@ import '../../model/sheet.dart';
 
 Spreadsheet spread;
 TabController tabController;
-
-Future<void> internetTryCatch(Future<void> Function() fun) async {
-  try {
-    final result =
-        await InternetAddress.lookup('google.com'); // TODO change google.com
-    if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-      await fun();
-    }
-  } on SocketException catch (_) {
-    showDialog(
-      context: navigatorKey.currentState.overlay.context,
-      builder: (context) => AlertDialog(
-        title: Text('No Internet'),
-        content: Text(
-          'The action you requested could not be completed due to the absence'
-          ' of Internet. Please try again when you are connected.',
-        ),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.close),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class Inventory extends StatefulWidget {
   final FileData file;
@@ -115,7 +86,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
           backgroundColor: Colors.red,
           child: Center(child: Text('GD')),
           onTap: () async {
-            await internetTryCatch(() async {
+            await WiFi().tryCatch(() async {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => PickFile('GD'),
@@ -129,7 +100,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
           backgroundColor: Colors.blue,
           child: Center(child: Text('DB')),
           onTap: () async {
-            await internetTryCatch(() async {
+            await WiFi().tryCatch(() async {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => PickFile('DB'),
@@ -284,7 +255,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
         child: IconButton(
           icon: Icon(Icons.refresh),
           onPressed: () async {
-            await internetTryCatch(() async {
+            await WiFi().tryCatch(() async {
               _key.currentState.show();
             });
           },
