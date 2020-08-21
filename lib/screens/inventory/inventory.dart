@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
 import 'package:mime_type/mime_type.dart';
