@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
 import 'package:mime_type/mime_type.dart';
@@ -6,6 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
 
+import '../../app.dart';
 import '../../wi_fi.dart';
 import 'fitted_text.dart';
 import 'results.dart';
@@ -30,34 +33,59 @@ class Inventory extends StatefulWidget {
 
 class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   bool speedDialIsOpen;
-  bool successfulDownload;
   FileData file;
   final GlobalKey<RefreshIndicatorState> _key =
       GlobalKey<RefreshIndicatorState>();
 
-  Future<void> pickOtherFile() async {
+  Future<FileData> pickOtherFile() async {
     final List<String> allowedExtensions = [
       'xlsx',
       'ods',
       'html',
       'htm',
     ];
+    String ext;
+    String filePath;
 
-    String filePath = await FilePicker.getFilePath(
+    filePath = await FilePicker.getFilePath(
       type: FileType.custom,
       allowedExtensions: allowedExtensions,
     );
+    ext = p.extension(filePath).replaceAll('.', '');
 
-    if (allowedExtensions.contains(p.extension(filePath).replaceAll('.', ''))) {
-      setState(() {
-        successfulDownload = true;
-      });
-      // TODO
+    if (allowedExtensions.contains(ext)) {
+      var bytes = await File(filePath).readAsBytes();
+      var fileData = FileData(
+        provider: null,
+        name: p.basename(filePath),
+        id: null,
+        mimeType: mimeFromExtension(ext),
+        bytes: bytes,
+      );
+      await fileData.save();
+
+      return fileData;
     } else {
-      setState(() {
-        successfulDownload = false;
-      });
-      await FilePicker.clearTemporaryFiles();
+      showDialog(
+        context: navigatorKey.currentState.overlay.context,
+        builder: (context) => AlertDialog(
+          title: Text('Failed to Read File'),
+          content: Text(
+            'The chosen file couldn\'t be read. Make sure its extension is'
+            ' one of the following: ${allowedExtensions.join(', ')}.',
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      );
+
+      return file;
     }
   }
 
@@ -107,14 +135,38 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
             });
           },
         ),
-//        SpeedDialChild(
-//          label: 'Other',
-//          backgroundColor: Colors.grey,
-//          child: Center(child: Text('OTH')),
-//          onTap: () {
-//            // TODO
-//          },
-//        ),
+        SpeedDialChild(
+          label: 'Other',
+          backgroundColor: Colors.grey,
+          child: Center(child: Text('OTH')),
+          onTap: () {
+            var futureFileData = pickOtherFile();
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (context) => FutureBuilder(
+                  future: futureFileData,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return Inventory(snapshot.data);
+                    } else if (snapshot.hasError) {
+                      return Scaffold(
+                        body: Center(
+                          child: Text("${snapshot.error}"),
+                        ),
+                      );
+                    }
+                    return Scaffold(
+                      body: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              (route) => false,
+            );
+          },
+        ),
       ],
     );
   }
@@ -123,7 +175,6 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     speedDialIsOpen = false;
-    successfulDownload = true;
     file = widget.file;
     spread = file?.bytes == null ? file?.bytes : getSpread(file.bytes);
     if (spread != null) {
@@ -247,28 +298,29 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   }
 
   List<Widget> actions() {
-    return [
-      Tooltip(
-        message: 'Refresh',
-        child: IconButton(
-          icon: Icon(Icons.refresh),
-          onPressed: () async {
-            await WiFi().tryCatch(() async {
-              _key.currentState.show();
-            });
-          },
-        ),
+    Widget refresh = Tooltip(
+      message: 'Refresh',
+      child: IconButton(
+        icon: Icon(Icons.refresh),
+        onPressed: () async {
+          await WiFi().tryCatch(() async {
+            _key.currentState.show();
+          });
+        },
       ),
-      Tooltip(
-        message: 'Search',
-        child: IconButton(
-          icon: Icon(Icons.search),
-          onPressed: () {
-            showSearch(context: context, delegate: CustomSearchDelegate());
-          },
-        ),
+    );
+
+    Widget search = Tooltip(
+      message: 'Search',
+      child: IconButton(
+        icon: Icon(Icons.search),
+        onPressed: () {
+          showSearch(context: context, delegate: CustomSearchDelegate());
+        },
       ),
-    ];
+    );
+
+    return file.provider == null ? [search] : [refresh, search];
   }
 
   @override
