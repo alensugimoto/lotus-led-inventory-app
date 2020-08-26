@@ -51,6 +51,11 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       type: FileType.custom,
       allowedExtensions: allowedExtensions,
     );
+
+    if (filePath == null) {
+      return widget.file;
+    }
+
     ext = p.extension(filePath).replaceAll('.', '');
 
     if (allowedExtensions.contains(ext)) {
@@ -85,7 +90,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
         ),
       );
 
-      return file;
+      return widget.file;
     }
   }
 
@@ -330,22 +335,23 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
             appBar: AppBar(
                 //leading: menuButton(),
                 ),
-            body: Container(
-              padding: EdgeInsets.symmetric(horizontal: 30.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Flexible(
-                    child: Text(
-                      'Choose a spreadsheet for the app to read using the'
-                      ' button below.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20.0,
-                        fontWeight: FontWeight.w400,
+            body: Center(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 30.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Flexible(
+                      child: Text(
+                        'Choose a spreadsheet for the app to read using the'
+                        ' button below.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20.0,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                     ),
-                  ),
 //                      SizedBox(height: 20.0),
 //                      Visibility(
 //                        visible: !successfulDownload,
@@ -375,7 +381,8 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
 //                          ),
 //                        ),
 //                      ),
-                ],
+                  ],
+                ),
               ),
             ),
             floatingActionButton: speedDial(),
