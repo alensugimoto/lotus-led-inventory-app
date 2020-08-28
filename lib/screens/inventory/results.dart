@@ -113,7 +113,13 @@ class _ResultsState extends State<Results>
                               widget._filteredResults,
                               row: index,
                             ).checkIsEmpty(
-                              end: 2,
+                              end: 1,
+                            ) && FittedText(
+                              widget._filteredResults,
+                              row: index,
+                            ).checkIsEmpty(
+                              start: 2,
+                              end: 3,
                             )
                                 ? Container()
                                 : Row(
@@ -124,8 +130,8 @@ class _ResultsState extends State<Results>
                                         widget._filteredResults,
                                         row: index,
                                       ).checkIsEmpty(
-                                        start: 1,
-                                        end: 2,
+                                        start: 2,
+                                        end: 3,
                                       )
                                           ? Expanded(
                                               child: FittedText(
@@ -163,8 +169,8 @@ class _ResultsState extends State<Results>
                                                 widget._filteredResults,
                                                 row: index,
                                               ).checkIsEmpty(
-                                                start: 1,
-                                                end: 2,
+                                                start: 2,
+                                                end: 3,
                                               )
                                           ? Container()
                                           : SizedBox(width: 10.0),
@@ -172,15 +178,15 @@ class _ResultsState extends State<Results>
                                         widget._filteredResults,
                                         row: index,
                                       ).checkIsEmpty(
-                                        start: 1,
-                                        end: 2,
+                                        start: 2,
+                                        end: 3,
                                       )
                                           ? Container()
                                           : Flexible(
                                               child: FittedText(
                                                 widget._filteredResults,
                                                 row: index,
-                                                column: 1,
+                                                column: 2,
                                                 includeLabel: true,
                                                 fontSize: 18.0,
                                                 textAlign: TextAlign.right,
@@ -193,8 +199,8 @@ class _ResultsState extends State<Results>
                               widget._filteredResults,
                               row: index,
                             ).checkIsEmpty(
-                              start: 2,
-                              end: 3,
+                              start: 1,
+                              end: 2,
                             )
                                 ? Container()
                                 : Column(
@@ -209,7 +215,7 @@ class _ResultsState extends State<Results>
                                               text: FittedText(
                                                 widget._filteredResults,
                                                 row: index,
-                                                column: 2,
+                                                column: 1,
                                               ).fittedTextText(),
                                             ),
                                           ],
