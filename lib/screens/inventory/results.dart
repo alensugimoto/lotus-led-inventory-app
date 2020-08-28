@@ -75,6 +75,7 @@ class _ResultsState extends State<Results>
     return Container(
       width: MediaQuery.of(context).size.width,
       height: MediaQuery.of(context).size.height,
+      color: Colors.grey[200],
       child: Stack(
         children: <Widget>[
           ListView.builder(
@@ -98,139 +99,135 @@ class _ResultsState extends State<Results>
                         ),
                       ),
                     )
-                  : Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Colors.grey[300],
-                          ),
+                  : Card(
+                      elevation: 3.0,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 6.0,
+                          horizontal: 7.0,
                         ),
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        vertical: 3.0,
-                        horizontal: 6.0,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          FittedText(
-                            widget._filteredResults,
-                            row: index,
-                          ).checkIsEmpty(
-                            end: 2,
-                          )
-                              ? Container()
-                              : Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: <Widget>[
-                                    FittedText(
-                                      widget._filteredResults,
-                                      row: index,
-                                    ).checkIsEmpty(
-                                      start: 1,
-                                      end: 2,
-                                    )
-                                        ? Expanded(
-                                            child: FittedText(
-                                              widget._filteredResults,
-                                              row: index,
-                                              column: 0,
-                                              fontSize: 18.0,
-                                              textAlign: TextAlign.left,
-                                              fontWeight: FontWeight.w900,
-                                            ),
-                                          )
-                                        : ConstrainedBox(
-                                            constraints: BoxConstraints(
-                                              maxWidth: MediaQuery.of(context)
-                                                      .size
-                                                      .width -
-                                                  100.0,
-                                            ),
-                                            child: FittedText(
-                                              widget._filteredResults,
-                                              row: index,
-                                              column: 0,
-                                              fontSize: 18.0,
-                                              textAlign: TextAlign.left,
-                                              fontWeight: FontWeight.w900,
-                                            ),
-                                          ),
-                                    FittedText(
-                                              widget._filteredResults,
-                                              row: index,
-                                            ).checkIsEmpty(
-                                              end: 1,
-                                            ) ||
-                                            FittedText(
-                                              widget._filteredResults,
-                                              row: index,
-                                            ).checkIsEmpty(
-                                              start: 1,
-                                              end: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            FittedText(
+                              widget._filteredResults,
+                              row: index,
+                            ).checkIsEmpty(
+                              end: 2,
+                            )
+                                ? Container()
+                                : Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: <Widget>[
+                                      FittedText(
+                                        widget._filteredResults,
+                                        row: index,
+                                      ).checkIsEmpty(
+                                        start: 1,
+                                        end: 2,
+                                      )
+                                          ? Expanded(
+                                              child: FittedText(
+                                                widget._filteredResults,
+                                                row: index,
+                                                column: 0,
+                                                fontSize: 18.0,
+                                                textAlign: TextAlign.left,
+                                                fontWeight: FontWeight.w900,
+                                              ),
                                             )
-                                        ? Container()
-                                        : SizedBox(width: 10.0),
-                                    FittedText(
-                                      widget._filteredResults,
-                                      row: index,
-                                    ).checkIsEmpty(
-                                      start: 1,
-                                      end: 2,
-                                    )
-                                        ? Container()
-                                        : Flexible(
-                                            child: FittedText(
-                                              widget._filteredResults,
-                                              row: index,
-                                              column: 1,
-                                              includeLabel: true,
-                                              fontSize: 18.0,
-                                              textAlign: TextAlign.right,
-                                              fontWeight: FontWeight.w500,
+                                          : ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxWidth: MediaQuery.of(context)
+                                                        .size
+                                                        .width -
+                                                    100.0,
+                                              ),
+                                              child: FittedText(
+                                                widget._filteredResults,
+                                                row: index,
+                                                column: 0,
+                                                fontSize: 18.0,
+                                                textAlign: TextAlign.left,
+                                                fontWeight: FontWeight.w900,
+                                              ),
                                             ),
-                                          ),
-                                  ],
-                                ),
-                          FittedText(
-                            widget._filteredResults,
-                            row: index,
-                          ).checkIsEmpty(
-                            start: 2,
-                            end: 3,
-                          )
-                              ? Container()
-                              : Column(
-                                  children: <Widget>[
-                                    SizedBox(height: 5.0),
-                                    RichText(
-                                      text: TextSpan(
-                                        style:
-                                            DefaultTextStyle.of(context).style,
-                                        children: <TextSpan>[
-                                          TextSpan(
-                                            text: FittedText(
-                                              widget._filteredResults,
-                                              row: index,
-                                              column: 2,
-                                            ).fittedTextText(),
-                                          ),
-                                        ],
+                                      FittedText(
+                                                widget._filteredResults,
+                                                row: index,
+                                              ).checkIsEmpty(
+                                                end: 1,
+                                              ) ||
+                                              FittedText(
+                                                widget._filteredResults,
+                                                row: index,
+                                              ).checkIsEmpty(
+                                                start: 1,
+                                                end: 2,
+                                              )
+                                          ? Container()
+                                          : SizedBox(width: 10.0),
+                                      FittedText(
+                                        widget._filteredResults,
+                                        row: index,
+                                      ).checkIsEmpty(
+                                        start: 1,
+                                        end: 2,
+                                      )
+                                          ? Container()
+                                          : Flexible(
+                                              child: FittedText(
+                                                widget._filteredResults,
+                                                row: index,
+                                                column: 1,
+                                                includeLabel: true,
+                                                fontSize: 18.0,
+                                                textAlign: TextAlign.right,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                    ],
+                                  ),
+                            FittedText(
+                              widget._filteredResults,
+                              row: index,
+                            ).checkIsEmpty(
+                              start: 2,
+                              end: 3,
+                            )
+                                ? Container()
+                                : Column(
+                                    children: <Widget>[
+                                      SizedBox(height: 5.0),
+                                      RichText(
+                                        text: TextSpan(
+                                          style: DefaultTextStyle.of(context)
+                                              .style,
+                                          children: <TextSpan>[
+                                            TextSpan(
+                                              text: FittedText(
+                                                widget._filteredResults,
+                                                row: index,
+                                                column: 2,
+                                              ).fittedTextText(),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(height: 5.0),
-                                  ],
-                                ),
-                          FittedText(
-                            widget._filteredResults,
-                            row: index,
-                          ).checkIsEmpty(
-                            start: 3,
-                          )
-                              ? Container()
-                              : QuantityList(index, widget._filteredResults),
-                        ],
+                                      SizedBox(height: 5.0),
+                                    ],
+                                  ),
+                            FittedText(
+                              widget._filteredResults,
+                              row: index,
+                            ).checkIsEmpty(
+                              start: 3,
+                            )
+                                ? Container()
+                                : QuantityList(index, widget._filteredResults),
+                          ],
+                        ),
                       ),
                     );
             },

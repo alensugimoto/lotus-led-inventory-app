@@ -206,6 +206,7 @@ Future<FileData> download({
     name: name,
     id: fileId,
     mimeType: mime,
+    dateTime: DateTime.now().toIso8601String(),
     bytes: resp.bodyBytes,
   );
   await fileData.save();

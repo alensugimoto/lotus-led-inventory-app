@@ -13,6 +13,7 @@ class FileData {
   final String id;
   final String mimeType;
   final List<int> bytes;
+  final String dateTime;
 
   FileData({
     @required this.provider,
@@ -20,6 +21,7 @@ class FileData {
     @required this.id,
     @required this.mimeType,
     @required this.bytes,
+    @required this.dateTime,
   });
 
   factory FileData.fromJson(Map<String, dynamic> json) => _$FileDataFromJson(json);

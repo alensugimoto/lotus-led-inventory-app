@@ -105,6 +105,7 @@ Future<FileData> download({
     name: fileName,
     id: dropboxPath,
     mimeType: mime,
+    dateTime: DateTime.now().toIso8601String(),
     bytes: resp.bodyBytes,
   );
   await fileData.save();

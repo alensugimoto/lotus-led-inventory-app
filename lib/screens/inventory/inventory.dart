@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
+import 'package:intl/intl.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart' as p;
 import 'package:file_picker/file_picker.dart';
@@ -34,6 +36,9 @@ class Inventory extends StatefulWidget {
 class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   bool speedDialIsOpen;
   FileData file;
+  String dateTime;
+  Flushbar flushbar;
+  int refreshSeconds = 10;
   final GlobalKey<RefreshIndicatorState> _key =
       GlobalKey<RefreshIndicatorState>();
 
@@ -65,6 +70,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
         name: p.basename(filePath),
         id: null,
         mimeType: mimeFromExtension(ext),
+        dateTime: DateTime.now().toIso8601String(),
         bytes: bytes,
       );
       await fileData.save();
@@ -182,6 +188,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
     speedDialIsOpen = false;
     file = widget.file;
     spread = file?.bytes == null ? file?.bytes : getSpread(file.bytes);
+    dateTime = file?.dateTime;
     if (spread != null) {
       tabController = TabController(
         length: spread.tables.keys.length,
@@ -190,6 +197,9 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
     } else {
       tabController = TabController(length: 0, vsync: this);
     }
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => showRefreshReminder(),
+    );
   }
 
   @override
@@ -265,6 +275,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
               .then((value) {
             setState(() {
               spread = getSpread(value.bytes);
+              dateTime = value.dateTime;
             });
           });
         }
@@ -282,6 +293,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
               .then((value) {
             setState(() {
               spread = getSpread(value.bytes);
+              dateTime = value.dateTime;
             });
           });
         }
@@ -292,13 +304,73 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   Future<Null> _refresh() async {
     setSpread();
     await Future.delayed(Duration(seconds: 2));
+
+    if (flushbar?.isShowing() ?? false) {
+      await flushbar.dismiss();
+    }
+    Future.delayed(
+      Duration(seconds: refreshSeconds),
+      showRefreshReminder,
+    );
+
     return null;
   }
 
+  void showRefreshReminder() {
+    if (flushbar == null) {
+      flushbar = Flushbar(
+        message: 'Remember to refresh the list once in a while.',
+        mainButton: FlatButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text(
+            'Dismiss',
+            style: TextStyle(color: Theme.of(context).primaryColor),
+          ),
+        ),
+      );
+    }
+    if (dateTime != null) {
+      int seconds = DateTime.now()
+          .difference(
+            DateTime.parse(dateTime),
+          )
+          .inSeconds;
+      if (seconds >= refreshSeconds) {
+        flushbar.show(context);
+      } else {
+        Future.delayed(
+          Duration(seconds: refreshSeconds - seconds),
+          showRefreshReminder,
+        );
+      }
+    }
+  }
+
   Widget title() {
-    return Tooltip(
-      child: Text(file.name),
-      message: file.name,
+    String timestamp = 'Last Refreshed: ${DateFormat(
+      'kk:mm:ss EEE d MMM',
+    ).format(DateTime.parse(dateTime))}';
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Tooltip(message: file.name, child: Text(file.name)),
+        Visibility(
+          visible: true,
+          child: Tooltip(
+            message: timestamp,
+            child: Text(
+              timestamp,
+              style: TextStyle(
+                fontSize: 12.0,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -325,7 +397,37 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       ),
     );
 
-    return file.provider == null ? [search] : [refresh, search];
+    return file.provider == null ? [search] : [search, refresh];
+  }
+
+  Widget drawer(String text) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          DrawerHeader(
+            child: Text('Drawer Header'),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+            ),
+          ),
+          ListTile(
+            title: Text('Item 1'),
+            onTap: () {
+              // Update the state of the app.
+              // ...
+            },
+          ),
+          ListTile(
+            title: Text('Item 2'),
+            onTap: () {
+              // Update the state of the app.
+              // ...
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -335,6 +437,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
             appBar: AppBar(
                 //leading: menuButton(),
                 ),
+            //drawer: drawer(''), TODO
             body: Center(
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 30.0),
@@ -416,6 +519,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
                     //leading: menuButton(),
                     actions: actions(),
                   ),
+            //drawer: drawer(file.name + ' (last refreshed: ?)'), TODO
             body: RefreshIndicator(
               key: _key,
               onRefresh: () {
