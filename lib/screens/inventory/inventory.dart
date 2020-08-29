@@ -38,7 +38,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   FileData file;
   String dateTime;
   Flushbar flushbar;
-  int refreshSeconds = 5;
+  int refreshSeconds = 300;
   final GlobalKey<RefreshIndicatorState> _key =
       GlobalKey<RefreshIndicatorState>();
 
