@@ -1,6 +1,6 @@
 # merch-and-price-app
 
-An app that displays data tables as simple lists of data.
+An app that displays tables as simple lists of data.
 
 An app that reads tables in files with the following
 extensions: ods, xlsx, gsheet, html, and htm. After reading, the tables are
