@@ -18,7 +18,7 @@ class Welcome extends StatelessWidget {
             children: <Widget>[
               Image(
                 image: AssetImage("assets/ic_launcher_round.png"),
-                height: 100.0,
+                height: 150.0,
               ),
               SizedBox(height: 20.0),
               Text(

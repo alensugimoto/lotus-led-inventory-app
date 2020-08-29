@@ -38,7 +38,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   FileData file;
   String dateTime;
   Flushbar flushbar;
-  int refreshSeconds = 300;
+  int refreshSeconds = 5;
   final GlobalKey<RefreshIndicatorState> _key =
       GlobalKey<RefreshIndicatorState>();
 
@@ -319,7 +319,8 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   void showRefreshReminder() {
     if (flushbar == null) {
       flushbar = Flushbar(
-        message: 'Remember to refresh the list once in a while.',
+        message: 'Remember to refresh the list once in a while. The'
+            ' refresh button is on the top right corner of the screen.',
         mainButton: FlatButton(
           onPressed: () {
             Navigator.of(context).pop();
