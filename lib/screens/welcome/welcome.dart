@@ -11,7 +11,7 @@ class Welcome extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Container(
+        child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 30.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -23,7 +23,6 @@ class Welcome extends StatelessWidget {
               SizedBox(height: 20.0),
               Text(
                 'Welcome',
-                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 30.0,
                   fontWeight: FontWeight.w500,
@@ -54,12 +53,14 @@ class Welcome extends StatelessWidget {
               ),
               SizedBox(height: 30.0),
               RaisedButton(
+                color: Theme.of(context).primaryColor,
+                textColor: Colors.white,
                 child: Text('Get Started'),
                 onPressed: () async {
-                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  final prefs = await SharedPreferences.getInstance();
                   prefs.setBool('hasStarted', true);
 
-                  Navigator.of(context).pushAndRemoveUntil(
+                  Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
                       builder: (context) => Inventory(
                         FileData.fromJson(
@@ -69,7 +70,6 @@ class Welcome extends StatelessWidget {
                         ),
                       ),
                     ),
-                    (route) => false,
                   );
                 },
               ),

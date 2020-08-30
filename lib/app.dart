@@ -8,7 +8,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Merch and Price',
+      title: 'Lotus LED Inventory',
       navigatorKey: navigatorKey,
       theme: ThemeData(
         primarySwatch: Colors.green,

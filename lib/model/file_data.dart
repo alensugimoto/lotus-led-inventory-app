@@ -28,21 +28,6 @@ class FileData {
 
   Map<String, dynamic> toJson() => _$FileDataToJson(this);
 
-//  FileData.fromJson(Map<String, dynamic> json)
-//      : provider = json['provider'],
-//        name = json['name'],
-//        id = json['id'],
-//        mimeType = json['mimeType'],
-//        bytes = json['bytes'];
-//
-//  Map<String, dynamic> toJson() => {
-//        'provider': provider,
-//        'name': name,
-//        'id': id,
-//        'mimeType': mimeType,
-//        'bytes': bytes,
-//      };
-
   Future<void> save() async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setString('file', json.encode(toJson()));

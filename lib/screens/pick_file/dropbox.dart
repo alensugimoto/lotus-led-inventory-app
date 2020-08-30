@@ -22,7 +22,6 @@ final List<String> allowedExtensions = [
 ];
 
 const String dropbox_key = '3ss8bafc9ujv2hx';
-const String dropbox_secret = 'oysrishvqq9wff5';
 
 Future<http.Response> getDropboxApiResponse({
   @required bool isRPC,
@@ -39,7 +38,6 @@ Future<http.Response> getDropboxApiResponse({
   helper.setAuthorizationParams(
     grantType: OAuth2Helper.AUTHORIZATION_CODE,
     clientId: dropbox_key,
-    clientSecret: dropbox_secret,
   );
 
   var arg = json.encode(queryParameters);

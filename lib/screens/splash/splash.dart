@@ -15,7 +15,7 @@ class Splash extends StatefulWidget {
 
 class _SplashState extends State<Splash> with AfterLayoutMixin<Splash> {
   checkHasStarted() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     bool _hasStarted = prefs.getBool('hasStarted') ?? false;
 
     if (_hasStarted) {
@@ -43,7 +43,19 @@ class _SplashState extends State<Splash> with AfterLayoutMixin<Splash> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image(
+              image: AssetImage("assets/ic_launcher_round.png"),
+              width: 300.0,
+            ),
+            SizedBox(height: 5.0),
+            CircularProgressIndicator(),
+          ],
+        ),
+      ),
     );
   }
 }
