@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:merch_and_price/screens/inventory/result.dart';
 
 import 'fitted_text.dart';
 import 'quantity_list.dart';
+import 'result.dart';
 
 class Results extends StatefulWidget {
   final List<List<dynamic>> _filteredResults;

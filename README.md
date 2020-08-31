@@ -1,4 +1,4 @@
-# merch-and-price-app
+# lotus-led-inventory-app
 
 An app that displays tables as simple lists of data.
 
