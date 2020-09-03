@@ -16,7 +16,7 @@ import 'fitted_text.dart';
 import 'results.dart';
 import '../pick_file/pick_file.dart';
 import '../pick_file/google_drive.dart' as google;
-import '../pick_file/dropbox.dart' as dropbox;
+import '../pick_file/dropbox.dart';
 import '../../model/file_data.dart';
 import '../../model/spreadsheet.dart';
 import '../../model/sheet.dart';
@@ -283,14 +283,12 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
 
       case 'Dropbox':
         {
-          dropbox
-              .download(
+          Dropbox.download(
             fileName: file.name,
             provider: file.provider,
             dropboxPath: file.id,
             mime: file.mimeType,
-          )
-              .then((value) {
+          ).then((value) {
             setState(() {
               spread = getSpread(value.bytes);
               dateTime = value.dateTime;
