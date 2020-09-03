@@ -560,7 +560,12 @@ class CustomSearchDelegate extends SearchDelegate<Map<String, String>> {
     @required Spreadsheet spread,
     @required String table,
   }) {
-    List<String> subQueries = query.toLowerCase().trim().split(RegExp(r"\s+"));
+    List<String> subQueries = query
+        .replaceAll(RegExp(r"[\u201d\u201c]"), "\"")
+        .replaceAll(RegExp(r"[\u2018\u2019]"), "\'")
+        .toLowerCase()
+        .trim()
+        .split(RegExp(r"\s+"));
 
     if (columns == null) {
       for (int j = 0; j < spread.tables[table].rows[0].length; j++) {
