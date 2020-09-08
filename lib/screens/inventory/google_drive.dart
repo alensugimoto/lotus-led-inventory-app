@@ -3,12 +3,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:lotus_led_inventory/model/try_catch.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:oauth2_client/oauth2_helper.dart';
 import 'package:oauth2_client/google_oauth2_client.dart';
 
-import '../../wi_fi.dart';
-import '../inventory/inventory.dart';
+import '../../model/try_catch.dart';
+import 'inventory.dart';
 import '../../model/file_data.dart';
 
 final List<String> allowedExtensions = [
@@ -248,7 +249,7 @@ Widget results({
                       ),
                       title: Text(name),
                       onTap: () async {
-                        await WiFi().tryCatch(() async {
+                        await TryCatch.onWifi(() async {
                           if (isFile) {
                             var futureFileData = download(
                               fileId: id,

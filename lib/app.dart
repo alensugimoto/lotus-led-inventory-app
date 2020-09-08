@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+
 import 'screens/splash/splash.dart';
 
-final navigatorKey = GlobalKey<NavigatorState>();
-
 class App extends StatelessWidget {
+  static final navigatorKey = GlobalKey<NavigatorState>();
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

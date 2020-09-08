@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 
+import 'shared_prefs.dart';
+
 part 'file_data.g.dart';
 
 @JsonSerializable()
@@ -30,6 +32,6 @@ class FileData {
 
   Future<void> save() async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setString('file', json.encode(toJson()));
+    prefs.setString(SharedPrefs.FILE, json.encode(toJson()));
   }
 }

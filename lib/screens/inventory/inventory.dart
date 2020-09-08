@@ -1,33 +1,32 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
 import 'package:intl/intl.dart';
+import 'package:lotus_led_inventory/model/provider_data.dart';
+import 'package:lotus_led_inventory/screens/help_and_support/help_and_support.dart';
 import 'package:mime_type/mime_type.dart';
-import 'package:path/path.dart' as p;
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
+import 'package:path/path.dart' as p;
 
 import '../../app.dart';
-import '../../wi_fi.dart';
+import '../../model/try_catch.dart';
+import '../../app_drawer/app_drawer.dart';
 import 'fitted_text.dart';
 import 'results.dart';
-import '../pick_file/pick_file.dart';
-import '../pick_file/google_drive.dart' as google;
-import '../pick_file/dropbox.dart';
+import 'google_drive.dart';
+import 'dropbox.dart';
 import '../../model/file_data.dart';
 import '../../model/spreadsheet.dart';
 import '../../model/sheet.dart';
 
-Spreadsheet spread;
-TabController tabController;
-
 class Inventory extends StatefulWidget {
   final FileData file;
 
-  Inventory([this.file]);
+  Inventory(this.file);
 
   @override
   InventoryState createState() => InventoryState();
@@ -35,24 +34,129 @@ class Inventory extends StatefulWidget {
 
 class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   bool speedDialIsOpen;
-  FileData file;
   String dateTime;
   Flushbar flushbar;
   int refreshSeconds = 300;
-  final GlobalKey<RefreshIndicatorState> _key =
-      GlobalKey<RefreshIndicatorState>();
+  final _key = GlobalKey<RefreshIndicatorState>();
+  static Spreadsheet spread;
+  static TabController tabController;
 
-  Future<FileData> pickOtherFile() async {
-    final List<String> allowedExtensions = [
+  final List<ProviderData> _providers = [
+    ProviderData(
+      name: 'Google Drive',
+      hasApi: true,
+      dialWidget: ClipOval(
+        child: Image.asset(
+          "assets/DriveGlyph_Color.png",
+          scale: 35.0,
+          fit: BoxFit.none,
+        ),
+      ),
+      onTapWidget: GoogleDrive(
+        fileName: 'Google Drive',
+        fileId: 'root',
+      ),
+    ),
+    ProviderData(
+      name: 'Dropbox',
+      hasApi: true,
+      dialWidget: ClipOval(
+        child: Image.asset(
+          "assets/DropboxGlyph_Blue.png",
+          scale: 9.0,
+          fit: BoxFit.none,
+        ),
+      ),
+      onTapWidget: Dropbox(
+        fileName: 'Dropbox',
+        filePath: '',
+      ),
+    ),
+    ProviderData(
+      name: 'Device',
+      hasApi: false,
+      dialWidget: Icon(
+        Icons.storage,
+        color: Colors.grey,
+      ),
+    ),
+  ];
+
+  List<SpeedDialChild> speedDialChildren() {
+    return _providers.map(
+      (providerData) {
+        return SpeedDialChild(
+          child: Center(
+            child: Tooltip(
+              message: 'Add from ${providerData.name}',
+              child: CircleAvatar(
+                backgroundColor: Colors.white,
+                child: providerData.dialWidget,
+              ),
+            ),
+          ),
+          onTap: () async {
+            if (providerData.hasApi) {
+              await _pickFileWithApi(providerData);
+            } else {
+              await _pickFileWithFilePicker();
+            }
+          },
+        );
+      },
+    ).toList();
+  }
+
+  Future<void> _pickFileWithApi(
+    ProviderData providerData,
+  ) async {
+    await TryCatch.onWifi(() async {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => providerData.onTapWidget,
+        ),
+      );
+    });
+  }
+
+  Future<void> _pickFileWithFilePicker() async {
+    final futureFileData = _getFutureFileData();
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => FutureBuilder(
+          future: futureFileData,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Inventory(snapshot.data);
+            } else if (snapshot.hasError) {
+              return Scaffold(
+                body: Center(
+                  child: Text("${snapshot.error}"),
+                ),
+              );
+            }
+            return Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          },
+        ),
+      ),
+      (route) => false,
+    );
+  }
+
+  Future<FileData> _getFutureFileData() async {
+    const List<String> allowedExtensions = [
       'xlsx',
       'ods',
       'html',
       'htm',
     ];
-    String ext;
-    String filePath;
 
-    filePath = await FilePicker.getFilePath(
+    final String filePath = await FilePicker.getFilePath(
       type: FileType.custom,
       allowedExtensions: allowedExtensions,
     );
@@ -61,11 +165,11 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       return widget.file;
     }
 
-    ext = p.extension(filePath).replaceAll('.', '');
+    final String ext = p.extension(filePath).replaceAll('.', '');
 
     if (allowedExtensions.contains(ext)) {
-      var bytes = await File(filePath).readAsBytes();
-      var fileData = FileData(
+      final bytes = await File(filePath).readAsBytes();
+      final fileData = FileData(
         provider: null,
         name: p.basename(filePath),
         id: null,
@@ -78,7 +182,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       return fileData;
     } else {
       showDialog(
-        context: navigatorKey.currentState.overlay.context,
+        context: App.navigatorKey.currentState.overlay.context,
         builder: (context) => AlertDialog(
           title: Text('Failed to Read File'),
           content: Text(
@@ -100,103 +204,40 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
     }
   }
 
-  Widget menuButton() {
-    return Tooltip(
-      message: 'Menu',
-      child: IconButton(
-        icon: Icon(Icons.menu),
-        onPressed: () {
-          // TODO
-        },
-      ),
-    );
-  }
-
   Widget speedDial() {
     return SpeedDial(
       onOpen: () => setState(() => speedDialIsOpen = true),
       onClose: () => setState(() => speedDialIsOpen = false),
       child: speedDialIsOpen ? Icon(Icons.close) : Icon(Icons.add),
-      children: <SpeedDialChild>[
-        SpeedDialChild(
-          label: 'Google Drive',
-          backgroundColor: Colors.red,
-          child: Center(child: Text('GD')),
-          onTap: () async {
-            await WiFi().tryCatch(() async {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => PickFile('GD'),
-                ),
-              );
-            });
-          },
-        ),
-        SpeedDialChild(
-          label: 'Dropbox',
-          backgroundColor: Colors.blue,
-          child: Center(child: Text('DB')),
-          onTap: () async {
-            await WiFi().tryCatch(() async {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => PickFile('DB'),
-                ),
-              );
-            });
-          },
-        ),
-        SpeedDialChild(
-          label: 'Other',
-          backgroundColor: Colors.grey,
-          child: Center(child: Text('OTH')),
-          onTap: () {
-            var futureFileData = pickOtherFile();
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(
-                builder: (context) => FutureBuilder(
-                  future: futureFileData,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return Inventory(snapshot.data);
-                    } else if (snapshot.hasError) {
-                      return Scaffold(
-                        body: Center(
-                          child: Text("${snapshot.error}"),
-                        ),
-                      );
-                    }
-                    return Scaffold(
-                      body: Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              (route) => false,
-            );
-          },
-        ),
-      ],
+      children: speedDialChildren(),
     );
   }
 
   @override
   void initState() {
     super.initState();
+
     speedDialIsOpen = false;
-    file = widget.file;
-    spread = file?.bytes == null ? file?.bytes : getSpread(file.bytes);
-    dateTime = file?.dateTime;
+    dateTime = widget.file.dateTime;
+
+    if (widget.file.bytes != null) {
+      spread = getSpread(
+        widget.file.bytes,
+      );
+    }
+
     if (spread != null) {
       tabController = TabController(
         length: spread.tables.keys.length,
         vsync: this,
       );
     } else {
-      tabController = TabController(length: 0, vsync: this);
+      tabController = TabController(
+        length: 0,
+        vsync: this,
+      );
     }
+
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => showRefreshReminder(),
     );
@@ -211,39 +252,40 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   Spreadsheet getSpread(List<int> bytes) {
     Map<String, Sheet> sheets = {};
 
-    switch (extensionFromMime(file.mimeType)) {
+    switch (extensionFromMime(widget.file.mimeType)) {
       case 'htm':
       case 'html':
         {
-          var document = parse(bytes);
-          var tables = document.getElementsByTagName('table');
+          final document = parse(bytes);
+          final tables = document.getElementsByTagName('table');
           for (int tblIndex = 0; tblIndex < tables.length; tblIndex++) {
-            var rows = tables[tblIndex].getElementsByTagName('tr');
-            List<Map<int, dynamic>> listOfMaps = [];
-            List<List<dynamic>> listOfLists = [];
+            final rows = tables[tblIndex].getElementsByTagName('tr');
+            List<Map<int, dynamic>> normalCells = [];
+            List<List<dynamic>> normalRows = [];
             for (var _ in rows) {
-              listOfMaps.add({});
+              normalCells.add({});
             }
             for (int rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-              var cells = rows[rowIndex].querySelectorAll('td, th');
+              final cells = rows[rowIndex].querySelectorAll('td, th');
               for (int colIndex = 0, offset = 0;
                   colIndex < cells.length;
                   colIndex++) {
-                while (listOfMaps[rowIndex].containsKey(colIndex + offset)) {
+                while (normalCells[rowIndex].containsKey(colIndex + offset)) {
                   offset++;
                 }
-                var cell = cells[colIndex];
-                int colspan = int.parse(cell.attributes['colspan'] ?? '1');
-                int rowspan = int.parse(cell.attributes['rowspan'] ?? '1');
+                final cell = cells[colIndex];
+                final colspan = int.parse(cell.attributes['colspan'] ?? '1');
+                final rowspan = int.parse(cell.attributes['rowspan'] ?? '1');
                 for (int i = 0; i < colspan; i++) {
                   for (int j = 0; j < rowspan; j++) {
-                    listOfMaps[rowIndex + j][colIndex + offset + i] = cell.text;
+                    normalCells[rowIndex + j][colIndex + offset + i] =
+                        cell.text;
                   }
                 }
               }
-              listOfLists.add(listOfMaps[rowIndex].values.toList());
+              normalRows.add(normalCells[rowIndex].values.toList());
             }
-            sheets['$tblIndex'] = Sheet(listOfLists);
+            sheets['$tblIndex'] = Sheet(normalRows);
           }
         }
         break;
@@ -262,17 +304,15 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   }
 
   void setSpread() {
-    switch (file.provider) {
+    switch (widget.file.provider) {
       case 'Google':
         {
-          google
-              .download(
-            name: file.name,
-            provider: file.provider,
-            fileId: file.id,
-            mime: file.mimeType,
-          )
-              .then((value) {
+          download(
+            name: widget.file.name,
+            provider: widget.file.provider,
+            fileId: widget.file.id,
+            mime: widget.file.mimeType,
+          ).then((value) {
             setState(() {
               spread = getSpread(value.bytes);
               dateTime = value.dateTime;
@@ -284,10 +324,10 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       case 'Dropbox':
         {
           Dropbox.download(
-            fileName: file.name,
-            provider: file.provider,
-            dropboxPath: file.id,
-            mime: file.mimeType,
+            fileName: widget.file.name,
+            provider: widget.file.provider,
+            dropboxPath: widget.file.id,
+            mime: widget.file.mimeType,
           ).then((value) {
             setState(() {
               spread = getSpread(value.bytes);
@@ -348,15 +388,17 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   }
 
   Widget title() {
-    String timestamp = 'Last Refreshed: ${DateFormat(
-      'kk:mm:ss EEE d MMM',
+    String timestamp = '${DateFormat(
+      'MMM d, y',
+    ).format(DateTime.parse(dateTime))} at ${DateFormat(
+      'kk:mm',
     ).format(DateTime.parse(dateTime))}';
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Tooltip(message: file.name, child: Text(file.name)),
+        Tooltip(message: widget.file.name, child: Text(widget.file.name)),
         Visibility(
           visible: true,
           child: Tooltip(
@@ -379,7 +421,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       child: IconButton(
         icon: Icon(Icons.refresh),
         onPressed: () async {
-          await WiFi().tryCatch(() async {
+          await TryCatch.onWifi(() async {
             _key.currentState.show();
           });
         },
@@ -396,115 +438,50 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       ),
     );
 
-    return file.provider == null ? [search] : [search, refresh];
-  }
-
-  Widget drawer(String text) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          DrawerHeader(
-            child: Text('Drawer Header'),
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor,
-            ),
-          ),
-          ListTile(
-            title: Text('Item 1'),
-            onTap: () {
-              // Update the state of the app.
-              // ...
-            },
-          ),
-          ListTile(
-            title: Text('Item 2'),
-            onTap: () {
-              // Update the state of the app.
-              // ...
-            },
-          ),
-        ],
-      ),
-    );
+    return widget.file.provider == null ? [search] : [search, refresh];
   }
 
   @override
   Widget build(BuildContext context) {
     return spread == null
         ? Scaffold(
-            appBar: AppBar(
-                //leading: menuButton(),
-                ),
-            //drawer: drawer(''), TODO
+            appBar: AppBar(),
+            drawer: AppDrawer(),
             body: Center(
-              child: Container(
+              child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 30.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Flexible(
-                      child: Text(
-                        'Choose a spreadsheet for the app to read using the'
-                        ' button below.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 20.0,
-                          fontWeight: FontWeight.w400,
-                        ),
+                  children: [
+                    Text(
+                      'Choose a file containing at least one data table '
+                      'using the green button in the corner.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
-//                      SizedBox(height: 20.0),
-//                      Visibility(
-//                        visible: !successfulDownload,
-//                        child: Flexible(
-//                          child: Text(
-//                            '*Your selected file does not abide by the below'
-//                            ' requirements. Please try again.',
-//                            textAlign: TextAlign.center,
-//                            style: TextStyle(
-//                              fontSize: 15.0,
-//                              fontWeight: FontWeight.w400,
-//                              color: Colors.red[600],
-//                            ),
-//                          ),
-//                        ),
-//                      ),
-//                      SizedBox(height: 20.0),
-//                      Flexible(
-//                        child: Text(
-//                          'The file\'s extension must be one of the following: ' +
-//                              allowedExtensions.join(', ') +
-//                              '.',
-//                          textAlign: TextAlign.center,
-//                          style: TextStyle(
-//                            fontSize: 20.0,
-//                            fontWeight: FontWeight.w400,
-//                          ),
-//                        ),
-//                      ),
+                    SizedBox(height: 30.0),
+                    RaisedButton(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        'Want to read Lotus LED Lights\' inventory but '
+                        'don\'t have permission? Click this button for help.',
+                      ),
+                      onPressed: HelpAndSupport.showRequestMethods,
+                    ),
                   ],
                 ),
               ),
             ),
             floatingActionButton: speedDial(),
-//            bottomNavigationBar: fileNames.length > 1
-//                ? Material(
-//                    color: Theme.of(context).primaryColor,
-//                    child: TabBar(
-//                      isScrollable: true,
-//                      tabs: List.generate(fileNames.length, (index) {
-//                        return Tab(text: fileNames[index].toUpperCase());
-//                      }),
-//                    ),
-//                  )
-//                : Material(),
           )
         : Scaffold(
             appBar: spread.tables.keys.length > 1
                 ? AppBar(
                     title: title(),
-                    //leading: menuButton(),
                     bottom: TabBar(
                       isScrollable: true,
                       controller: tabController,
@@ -515,10 +492,9 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
                   )
                 : AppBar(
                     title: title(),
-                    //leading: menuButton(),
                     actions: actions(),
                   ),
-            //drawer: drawer(file.name + ' (last refreshed: ?)'), TODO
+            drawer: AppDrawer(),
             body: RefreshIndicator(
               key: _key,
               onRefresh: () {
@@ -636,21 +612,22 @@ class CustomSearchDelegate extends SearchDelegate<Map<String, String>> {
   @override
   Widget buildResults(BuildContext context) {
     List<List<dynamic>> filteredResults = [];
-    final String table = spread.tables.keys.length > 1
-        ? spread.tables.keys.toList()[tabController.index]
-        : spread.tables.keys.first;
+    final String table = InventoryState.spread.tables.keys.length > 1
+        ? InventoryState.spread.tables.keys
+            .toList()[InventoryState.tabController.index]
+        : InventoryState.spread.tables.keys.first;
 
-    for (int i = 0; i < spread.tables[table].rows.length; i++) {
+    for (int i = 0; i < InventoryState.spread.tables[table].rows.length; i++) {
       if (query.isNotEmpty) {
         if (i == 0) {
-          filteredResults.add(spread.tables[table].rows[i]);
+          filteredResults.add(InventoryState.spread.tables[table].rows[i]);
         } else {
           if (queryIsMatching(
             i,
-            spread: spread,
+            spread: InventoryState.spread,
             table: table,
           )) {
-            filteredResults.add(spread.tables[table].rows[i]);
+            filteredResults.add(InventoryState.spread.tables[table].rows[i]);
           }
         }
       }
@@ -708,18 +685,20 @@ class CustomSearchDelegate extends SearchDelegate<Map<String, String>> {
   @override
   Widget buildSuggestions(BuildContext context) {
     List<List<dynamic>> filteredSuggestions = [[]];
-    final String table = spread.tables.keys.length > 1
-        ? spread.tables.keys.toList()[tabController.index]
-        : spread.tables.keys.first;
+    final String table = InventoryState.spread.tables.keys.length > 1
+        ? InventoryState.spread.tables.keys
+            .toList()[InventoryState.tabController.index]
+        : InventoryState.spread.tables.keys.first;
 
-    for (int i = 1; i < spread.tables[table].rows.length; i++) {
+    for (int i = 1; i < InventoryState.spread.tables[table].rows.length; i++) {
       if (query.isNotEmpty) {
         if (queryIsMatching(
           i,
-          spread: spread,
+          spread: InventoryState.spread,
           table: table,
         )) {
-          filteredSuggestions[0].add(spread.tables[table].rows[i][0]);
+          filteredSuggestions[0]
+              .add(InventoryState.spread.tables[table].rows[i][0]);
         }
       }
     }

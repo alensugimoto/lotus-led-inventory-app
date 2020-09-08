@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../inventory/inventory.dart';
 import '../welcome/welcome.dart';
 import '../../model/file_data.dart';
+import '../../model/shared_prefs.dart';
 
 class Splash extends StatefulWidget {
   @override
@@ -14,18 +15,18 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> with AfterLayoutMixin<Splash> {
-  checkHasStarted() async {
+  checkGotStarted() async {
     final prefs = await SharedPreferences.getInstance();
-    bool _hasStarted = prefs.getBool('hasStarted') ?? false;
+    final _gotStarted = prefs.getBool(SharedPrefs.GOT_STARTED) ?? false;
 
-    if (_hasStarted) {
+    if (_gotStarted) {
+      final jsonString = prefs.getString(SharedPrefs.FILE);
+
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => Inventory(
             FileData.fromJson(
-              prefs.getString('file') == null
-                  ? {}
-                  : json.decode(prefs.getString('file')),
+              jsonString == null ? {} : json.decode(jsonString),
             ),
           ),
         ),
@@ -38,7 +39,7 @@ class _SplashState extends State<Splash> with AfterLayoutMixin<Splash> {
   }
 
   @override
-  void afterFirstLayout(BuildContext context) => checkHasStarted();
+  void afterFirstLayout(BuildContext context) => checkGotStarted();
 
   @override
   Widget build(BuildContext context) {
