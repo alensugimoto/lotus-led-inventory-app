@@ -36,41 +36,35 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   bool speedDialIsOpen;
   String dateTime;
   Flushbar flushbar;
-  int refreshSeconds = 300;
+  bool isLoading;
+  static const int refreshSeconds = 300;
+
   final _key = GlobalKey<RefreshIndicatorState>();
   static Spreadsheet spread;
-  static TabController tabController;
-
   final List<ProviderData> _providers = [
     ProviderData(
-      name: 'Google Drive',
+      name: GoogleDrive.NAME,
       hasApi: true,
       dialWidget: ClipOval(
         child: Image.asset(
-          "assets/DriveGlyph_Color.png",
+          GoogleDrive.GLYPH_PATH,
           scale: 35.0,
           fit: BoxFit.none,
         ),
       ),
-      onTapWidget: GoogleDrive(
-        fileName: 'Google Drive',
-        fileId: 'root',
-      ),
+      onTapWidget: GoogleDrive(),
     ),
     ProviderData(
-      name: 'Dropbox',
+      name: Dropbox.NAME,
       hasApi: true,
       dialWidget: ClipOval(
         child: Image.asset(
-          "assets/DropboxGlyph_Blue.png",
+          Dropbox.GLYPH_PATH,
           scale: 9.0,
           fit: BoxFit.none,
         ),
       ),
-      onTapWidget: Dropbox(
-        fileName: 'Dropbox',
-        filePath: '',
-      ),
+      onTapWidget: Dropbox(),
     ),
     ProviderData(
       name: 'Device',
@@ -81,6 +75,15 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       ),
     ),
   ];
+
+  Widget speedDial() {
+    return SpeedDial(
+      onOpen: () => setState(() => speedDialIsOpen = true),
+      onClose: () => setState(() => speedDialIsOpen = false),
+      child: speedDialIsOpen ? Icon(Icons.close) : Icon(Icons.add),
+      children: speedDialChildren(),
+    );
+  }
 
   List<SpeedDialChild> speedDialChildren() {
     return _providers.map(
@@ -120,35 +123,23 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   }
 
   Future<void> _pickFileWithFilePicker() async {
-    final futureFileData = _getFutureFileData();
+    setState(() {
+      isLoading = true;
+    });
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (context) => FutureBuilder(
-          future: futureFileData,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return Inventory(snapshot.data);
-            } else if (snapshot.hasError) {
-              return Scaffold(
-                body: Center(
-                  child: Text("${snapshot.error}"),
-                ),
-              );
-            }
-            return Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-          },
+    final fileData = await _getFutureFileDataWithFilePicker();
+
+    if (fileData != null) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => Inventory(fileData),
         ),
-      ),
-      (route) => false,
-    );
+        (route) => false,
+      );
+    }
   }
 
-  Future<FileData> _getFutureFileData() async {
+  Future<FileData> _getFutureFileDataWithFilePicker() async {
     const List<String> allowedExtensions = [
       'xlsx',
       'ods',
@@ -156,13 +147,16 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       'htm',
     ];
 
-    final String filePath = await FilePicker.getFilePath(
-      type: FileType.custom,
-      allowedExtensions: allowedExtensions,
-    );
+    String filePath;
+    try {
+      filePath = await FilePicker.getFilePath(
+        type: FileType.custom,
+        allowedExtensions: allowedExtensions,
+      );
+    } catch (_) {}
 
     if (filePath == null) {
-      return widget.file;
+      return null;
     }
 
     final String ext = p.extension(filePath).replaceAll('.', '');
@@ -200,17 +194,8 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
         ),
       );
 
-      return widget.file;
+      return null;
     }
-  }
-
-  Widget speedDial() {
-    return SpeedDial(
-      onOpen: () => setState(() => speedDialIsOpen = true),
-      onClose: () => setState(() => speedDialIsOpen = false),
-      child: speedDialIsOpen ? Icon(Icons.close) : Icon(Icons.add),
-      children: speedDialChildren(),
-    );
   }
 
   @override
@@ -219,34 +204,33 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
 
     speedDialIsOpen = false;
     dateTime = widget.file.dateTime;
+    isLoading = false;
 
     if (widget.file.bytes != null) {
-      spread = getSpread(
-        widget.file.bytes,
-      );
-    }
-
-    if (spread != null) {
-      tabController = TabController(
-        length: spread.tables.keys.length,
-        vsync: this,
-      );
-    } else {
-      tabController = TabController(
-        length: 0,
-        vsync: this,
-      );
+      spread = getSpread(widget.file.bytes);
     }
 
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => showRefreshReminder(),
+      (_) async {
+        await refreshReminder(() async {
+          int seconds =
+              DateTime.now().difference(DateTime.parse(dateTime)).inSeconds;
+          if (seconds >= refreshSeconds) {
+            flushbar.show(context);
+          } else {
+            Future.delayed(
+              Duration(seconds: refreshSeconds - seconds),
+              () => refreshReminder(() async {
+                if (flushbar?.isShowing() ?? false) {
+                  await flushbar.dismiss();
+                }
+                flushbar.show(context);
+              }),
+            );
+          }
+        });
+      },
     );
-  }
-
-  @override
-  void dispose() {
-    tabController.dispose();
-    super.dispose();
   }
 
   Spreadsheet getSpread(List<int> bytes) {
@@ -303,58 +287,67 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
     return Spreadsheet(sheets);
   }
 
-  void setSpread() {
+  Future<void> setSpread() async {
+    FileData fileData;
+
     switch (widget.file.provider) {
       case 'Google':
         {
-          download(
+          fileData = await GoogleDrive.download(
             name: widget.file.name,
             provider: widget.file.provider,
             fileId: widget.file.id,
             mime: widget.file.mimeType,
-          ).then((value) {
-            setState(() {
-              spread = getSpread(value.bytes);
-              dateTime = value.dateTime;
-            });
-          });
+          );
         }
         break;
 
       case 'Dropbox':
         {
-          Dropbox.download(
+          fileData = await Dropbox.download(
             fileName: widget.file.name,
             provider: widget.file.provider,
             dropboxPath: widget.file.id,
             mime: widget.file.mimeType,
-          ).then((value) {
-            setState(() {
-              spread = getSpread(value.bytes);
-              dateTime = value.dateTime;
-            });
-          });
+          );
         }
         break;
+    }
+
+    if (fileData == null) {
+      Flushbar(
+        message: 'Failed to refresh',
+        duration: Duration(seconds: 2),
+      )..show(context);
+    } else {
+      setState(() {
+        spread = getSpread(fileData.bytes);
+        dateTime = fileData.dateTime;
+      });
     }
   }
 
   Future<Null> _refresh() async {
-    setSpread();
-    await Future.delayed(Duration(seconds: 2));
-
     if (flushbar?.isShowing() ?? false) {
       await flushbar.dismiss();
     }
+
+    await setSpread();
+
     Future.delayed(
       Duration(seconds: refreshSeconds),
-      showRefreshReminder,
+      () => refreshReminder(() async {
+        if (flushbar?.isShowing() ?? false) {
+          await flushbar.dismiss();
+        }
+        flushbar.show(context);
+      }),
     );
 
     return null;
   }
 
-  void showRefreshReminder() {
+  Future<void> refreshReminder(Future<void> Function() show) async {
     if (flushbar == null) {
       flushbar = Flushbar(
         message: 'Remember to refresh the list once in a while. The'
@@ -370,21 +363,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
         ),
       );
     }
-    if (dateTime != null) {
-      int seconds = DateTime.now()
-          .difference(
-            DateTime.parse(dateTime),
-          )
-          .inSeconds;
-      if (seconds >= refreshSeconds) {
-        flushbar.show(context);
-      } else {
-        Future.delayed(
-          Duration(seconds: refreshSeconds - seconds),
-          showRefreshReminder,
-        );
-      }
-    }
+    await show();
   }
 
   Widget title() {
@@ -398,16 +377,16 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Tooltip(message: widget.file.name, child: Text(widget.file.name)),
-        Visibility(
-          visible: true,
-          child: Tooltip(
-            message: timestamp,
-            child: Text(
-              timestamp,
-              style: TextStyle(
-                fontSize: 12.0,
-              ),
+        Tooltip(
+          message: widget.file.name,
+          child: Text(widget.file.name),
+        ),
+        Tooltip(
+          message: 'Last Refreshed: $timestamp',
+          child: Text(
+            timestamp,
+            style: TextStyle(
+              fontSize: 12.0,
             ),
           ),
         ),
@@ -443,87 +422,81 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return spread == null
+    return isLoading == true
         ? Scaffold(
             appBar: AppBar(),
             drawer: AppDrawer(),
             body: Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Choose a file containing at least one data table '
-                      'using the green button in the corner.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20.0,
-                        color: Colors.black,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    SizedBox(height: 30.0),
-                    RaisedButton(
-                      padding: EdgeInsets.all(16.0),
-                      child: Text(
-                        'Want to read Lotus LED Lights\' inventory but '
-                        'don\'t have permission? Click this button for help.',
-                      ),
-                      onPressed: HelpAndSupport.showRequestMethods,
-                    ),
-                  ],
-                ),
-              ),
+              child: CircularProgressIndicator(),
             ),
-            floatingActionButton: speedDial(),
           )
-        : Scaffold(
-            appBar: spread.tables.keys.length > 1
-                ? AppBar(
-                    title: title(),
-                    bottom: TabBar(
-                      isScrollable: true,
-                      controller: tabController,
-                      tabs:
-                          spread.tables.keys.map((e) => Tab(text: e)).toList(),
+        : spread == null
+            ? Scaffold(
+                appBar: AppBar(),
+                drawer: AppDrawer(),
+                body: Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 30.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Choose a file containing at least one data table '
+                          'using the green button in the corner.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 20.0,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        SizedBox(height: 30.0),
+                        RaisedButton(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text(
+                            'Want to read Lotus LED Lights\' inventory but '
+                            'don\'t have permission? Click this button for help.',
+                          ),
+                          onPressed: HelpAndSupport.showRequestMethods,
+                        ),
+                      ],
                     ),
-                    actions: actions(),
-                  )
-                : AppBar(
-                    title: title(),
-                    actions: actions(),
                   ),
-            drawer: AppDrawer(),
-            body: RefreshIndicator(
-              key: _key,
-              onRefresh: () {
-                return _refresh();
-              },
-              child: TabBarView(
-                physics: NeverScrollableScrollPhysics(),
-                controller: tabController,
-                children: spread.tables.keys
-                    .map(
-                      (e) => Results(spread.tables[e].rows),
-                    )
-                    .toList(),
-              ),
-            ),
-            floatingActionButton: speedDial(),
-//                    bottomNavigationBar: fileNames.length > 1
-//                        ? Material(
-//                            color: Theme.of(context).primaryColor,
-//                            child: TabBar(
-//                              isScrollable: true,
-//                              tabs: List.generate(fileNames.length, (index) {
-//                                return Tab(
-//                                    text: fileNames[index].toUpperCase());
-//                              }),
-//                            ),
-//                          )
-//                        : Material(),
-          );
+                ),
+                floatingActionButton: speedDial(),
+              )
+            : DefaultTabController(
+                length: spread.tables.keys.length,
+                child: Scaffold(
+                  appBar: spread.tables.keys.length > 1
+                      ? AppBar(
+                          title: title(),
+                          bottom: TabBar(
+                            isScrollable: true,
+                            tabs: spread.tables.keys
+                                .map((e) => Tab(text: e))
+                                .toList(),
+                          ),
+                          actions: actions(),
+                        )
+                      : AppBar(
+                          title: title(),
+                          actions: actions(),
+                        ),
+                  drawer: AppDrawer(),
+                  body: RefreshIndicator(
+                    key: _key,
+                    onRefresh: _refresh,
+                    child: TabBarView(
+                      physics: NeverScrollableScrollPhysics(),
+                      children: spread.tables.keys
+                          .map((key) => Results(spread.tables[key].rows))
+                          .toList(),
+                    ),
+                  ),
+                  floatingActionButton: speedDial(),
+                ),
+              );
   }
 }
 
@@ -612,93 +585,43 @@ class CustomSearchDelegate extends SearchDelegate<Map<String, String>> {
   @override
   Widget buildResults(BuildContext context) {
     List<List<dynamic>> filteredResults = [];
-    final String table = InventoryState.spread.tables.keys.length > 1
-        ? InventoryState.spread.tables.keys
-            .toList()[InventoryState.tabController.index]
-        : InventoryState.spread.tables.keys.first;
 
-    for (int i = 0; i < InventoryState.spread.tables[table].rows.length; i++) {
-      if (query.isNotEmpty) {
-        if (i == 0) {
-          filteredResults.add(InventoryState.spread.tables[table].rows[i]);
-        } else {
-          if (queryIsMatching(
-            i,
-            spread: InventoryState.spread,
-            table: table,
-          )) {
-            filteredResults.add(InventoryState.spread.tables[table].rows[i]);
+    for (var key in InventoryState.spread.tables.keys) {
+      for (int i = 0; i < InventoryState.spread.tables[key].rows.length; i++) {
+        if (query.isNotEmpty) {
+          if (i == 0) {
+            filteredResults.add(InventoryState.spread.tables[key].rows[i]);
+          } else {
+            if (queryIsMatching(
+              i,
+              spread: InventoryState.spread,
+              table: key,
+            )) {
+              filteredResults.add(InventoryState.spread.tables[key].rows[i]);
+            }
           }
         }
       }
     }
 
     return Results(filteredResults);
-//    SpreadsheetDecoder decoder = snapshot.data;
-//    return DefaultTabController(
-//      length: decoder.tables.keys.length,
-//      child: Scaffold(
-//        appBar: decoder.tables.keys.length > 1
-//            ? AppBar(
-//                title: Text(widget.file['name']),
-//                leading: infoButton(),
-//                bottom: TabBar(
-//                  tabs: decoder.tables.keys.map((e) => Tab(text: e)).toList(),
-//                ),
-//                actions: actions(),
-//              )
-//            : AppBar(
-//                title: Text(widget.file['name']),
-//                leading: infoButton(),
-//                actions: actions(),
-//              ),
-//        body: TabBarView(
-//          children: decoder.tables.keys
-//              .map(
-//                (e) => RefreshIndicator(
-//                  key: _key,
-//                  onRefresh: () {
-//                    return _refresh();
-//                  },
-//                  child: Results(decoder.tables[e].rows),
-//                ),
-//              )
-//              .toList(),
-//        ),
-//        floatingActionButton: speedDial(),
-////                    bottomNavigationBar: fileNames.length > 1
-////                        ? Material(
-////                            color: Theme.of(context).primaryColor,
-////                            child: TabBar(
-////                              isScrollable: true,
-////                              tabs: List.generate(fileNames.length, (index) {
-////                                return Tab(
-////                                    text: fileNames[index].toUpperCase());
-////                              }),
-////                            ),
-////                          )
-////                        : Material(),
-//      ),
-//    );
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
     List<List<dynamic>> filteredSuggestions = [[]];
-    final String table = InventoryState.spread.tables.keys.length > 1
-        ? InventoryState.spread.tables.keys
-            .toList()[InventoryState.tabController.index]
-        : InventoryState.spread.tables.keys.first;
 
-    for (int i = 1; i < InventoryState.spread.tables[table].rows.length; i++) {
-      if (query.isNotEmpty) {
-        if (queryIsMatching(
-          i,
-          spread: InventoryState.spread,
-          table: table,
-        )) {
-          filteredSuggestions[0]
-              .add(InventoryState.spread.tables[table].rows[i][0]);
+    for (var key in InventoryState.spread.tables.keys) {
+      for (int i = 1; i < InventoryState.spread.tables[key].rows.length; i++) {
+        if (query.isNotEmpty) {
+          if (queryIsMatching(
+            i,
+            spread: InventoryState.spread,
+            table: key,
+          )) {
+            filteredSuggestions[0]
+                .add(InventoryState.spread.tables[key].rows[i][0]);
+          }
         }
       }
     }

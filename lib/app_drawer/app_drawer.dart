@@ -74,7 +74,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 ),
                 ListTile(
                   leading: Icon(Icons.help),
-                  title: Text('Help'),
+                  title: Text('Help and Support'),
                   onTap: () {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../app.dart';
@@ -54,5 +55,21 @@ class TryCatch {
         ),
       )..show(context);
     }
+  }
+
+  static Future<Response> toGetApiResponse(
+    List<int> errorsByStatusCode,
+    Future<Response> Function() getApiResponse,
+  ) async {
+    Response resp;
+    try {
+      resp = await getApiResponse();
+    } catch (_) {
+      return null;
+    }
+    if (errorsByStatusCode.contains(resp.statusCode)) {
+      return null;
+    }
+    return resp;
   }
 }
