@@ -7,10 +7,12 @@ import '../../model/try_catch.dart';
 class ContactInfoTile extends StatelessWidget {
   final String subtitle;
   final String title;
+  final Widget leading;
   final bool isLink;
 
   ContactInfoTile({
-    @required this.subtitle,
+    this.leading,
+    this.subtitle,
     @required this.title,
     @required this.isLink,
   });
@@ -27,7 +29,8 @@ class ContactInfoTile extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
       ),
-      subtitle: Text(subtitle),
+      leading: leading,
+      subtitle: subtitle == null ? null : Text(subtitle),
       trailing: Tooltip(
         message: isLink ? 'Launch URL' : 'Copy text',
         child: Icon(isLink ? Icons.launch : Icons.content_copy),

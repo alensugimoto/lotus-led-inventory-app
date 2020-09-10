@@ -25,6 +25,9 @@ class GoogleDrive extends StatelessWidget {
   static const String NAME = 'Google Drive';
   static const String ROOT_ID = 'root';
   static const String GLYPH_PATH = 'assets/DriveGlyph_Color.png';
+  static const List<String> READ_SCOPES = [
+    'https://www.googleapis.com/auth/drive.readonly',
+  ];
   static const List<String> allowedExtensions = [
     'xlsx',
     'ods',
@@ -47,9 +50,6 @@ class GoogleDrive extends StatelessWidget {
       '870429610804-87oatltl467p76ba1hb2nbpg7he3hbc6.apps.googleusercontent.com';
   static const String _iosClientId =
       '870429610804-3ni7p17b5rmmml3qi5j5auqrn728j5kg.apps.googleusercontent.com';
-  static const List<String> _scopes = [
-    'https://www.googleapis.com/auth/drive.readonly'
-  ];
 
   static final List<String> allowedMimeTypes = allowedExtensions
       .map(
@@ -57,10 +57,7 @@ class GoogleDrive extends StatelessWidget {
       )
       .toList();
 
-  static Future<http.Response> getApiResponse({
-    String unencodedPath = '',
-    Map<String, String> queryParameters,
-  }) async {
+  static OAuth2Helper getOAuth2Helper(List<String> scopes) {
     var helper = OAuth2Helper(
       GoogleOAuth2Client(
         customUriScheme: 'com.lotusledlights.merchandprice',
@@ -71,32 +68,77 @@ class GoogleDrive extends StatelessWidget {
     helper.setAuthorizationParams(
       grantType: OAuth2Helper.AUTHORIZATION_CODE,
       clientId: Platform.isAndroid ? _androidClientId : _iosClientId,
-      scopes: _scopes,
+      scopes: scopes,
     );
 
+    return helper;
+  }
+
+  static Future<http.Response> getHttpResponse({
+    String unencodedPath = '',
+    Map<String, String> queryParameters,
+  }) async {
+    var helper = getOAuth2Helper(READ_SCOPES);
+
     final Uri uri = Uri.https(
-        'www.googleapis.com', '/drive/v3/files$unencodedPath', queryParameters);
-    http.Response resp = await helper.get(uri.toString());
+      'www.googleapis.com',
+      '/drive/v3/files$unencodedPath',
+      queryParameters,
+    );
+    http.Response resp = await TryCatch.toGetApiResponse(
+      () async {
+        return await helper.get(uri.toString());
+      },
+      ERRORS_BY_STATUS_CODE,
+    );
 
     return resp;
+  }
+
+  static Future<bool> revokeToken(List<String> scopes) async {
+    var helper = getOAuth2Helper(scopes);
+
+    await helper.disconnect();
+
+    return await getTokenFromStorage(scopes);
+  }
+
+  static Future<bool> getTokenFromStorage(List<String> scopes) async {
+    var helper = getOAuth2Helper(scopes);
+
+    var tknResp = await helper.getTokenFromStorage();
+    if (tknResp == null) {
+      return false;
+    }
+    return true;
+  }
+
+  static Future<bool> getToken(List<String> scopes, void Function() onError) async {
+    var helper = getOAuth2Helper(scopes);
+
+    var tknResp = await TryCatch.toGetApiResponse(
+      () async {
+        return await helper.getToken();
+      },
+    );
+    if (tknResp == null) {
+      onError();
+      return false;
+    }
+    return true;
   }
 
   static Future<List> list({
     @required bool filterWithQuery,
     @required String filter,
   }) async {
-    http.Response resp = await TryCatch.toGetApiResponse(
-      ERRORS_BY_STATUS_CODE,
-      () async {
-        return await getApiResponse(
-          queryParameters: {
-            'q': "(mimeType = 'application/vnd.google-apps.folder' or " +
-                "${allowedMimeTypes.join(" or ")}) and " +
-                (filterWithQuery
-                    ? "name contains '$filter'"
-                    : "'$filter' in parents")
-          },
-        );
+    http.Response resp = await getHttpResponse(
+      queryParameters: {
+        'q': "(mimeType = 'application/vnd.google-apps.folder' or " +
+            "${allowedMimeTypes.join(" or ")}) and " +
+            (filterWithQuery
+                ? "name contains '$filter'"
+                : "'$filter' in parents")
       },
     );
 
@@ -114,27 +156,20 @@ class GoogleDrive extends StatelessWidget {
     @required String provider,
     @required String name,
   }) async {
-    http.Response resp = await TryCatch.toGetApiResponse(
-      ERRORS_BY_STATUS_CODE,
-      () async {
-        if (mime == mimeFromExtension('gsheet')) {
-          return await getApiResponse(
+    http.Response resp = mime == mimeFromExtension('gsheet')
+        ? await getHttpResponse(
             unencodedPath: '/$fileId/export',
             queryParameters: {
               'alt': 'media',
               'mimeType': mimeFromExtension('xlsx'),
             },
-          );
-        } else {
-          return await getApiResponse(
+          )
+        : await getHttpResponse(
             unencodedPath: '/$fileId',
             queryParameters: {
               'alt': 'media',
             },
           );
-        }
-      },
-    );
 
     if (resp == null) {
       return null;
@@ -233,6 +268,11 @@ class GoogleDrive extends StatelessWidget {
                                         );
                                       } else {
                                         setState(() => isLoading = false);
+                                        Flushbar(
+                                          message: 'We couldn\'t access '
+                                              'your file',
+                                          duration: Duration(seconds: 2),
+                                        )..show(context);
                                       }
                                     } else {
                                       onFolderTap(id, name.replaceAll('/', ''));

@@ -213,20 +213,24 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
         await refreshReminder(() async {
-          int seconds =
-              DateTime.now().difference(DateTime.parse(dateTime)).inSeconds;
-          if (seconds >= refreshSeconds) {
-            flushbar.show(context);
-          } else {
-            Future.delayed(
-              Duration(seconds: refreshSeconds - seconds),
-              () => refreshReminder(() async {
-                if (flushbar?.isShowing() ?? false) {
-                  await flushbar.dismiss();
+          if (dateTime != null) {
+            int seconds =
+                DateTime.now().difference(DateTime.parse(dateTime)).inSeconds;
+            if (seconds >= refreshSeconds) {
+              flushbar.show(context);
+            } else {
+              Future.delayed(
+                Duration(seconds: refreshSeconds - seconds),
+                () async {
+                  await refreshReminder(() async {
+                    if (flushbar?.isShowing() ?? false) {
+                      await flushbar.dismiss();
+                    }
+                    flushbar.show(context);
+                  });
                 }
-                flushbar.show(context);
-              }),
-            );
+              );
+            }
           }
         });
       },
@@ -336,12 +340,14 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
 
     Future.delayed(
       Duration(seconds: refreshSeconds),
-      () => refreshReminder(() async {
-        if (flushbar?.isShowing() ?? false) {
-          await flushbar.dismiss();
-        }
-        flushbar.show(context);
-      }),
+      () async {
+        await refreshReminder(() async {
+          if (flushbar?.isShowing() ?? false) {
+            await flushbar.dismiss();
+          }
+          flushbar.show(context);
+        });
+      }
     );
 
     return null;
@@ -442,7 +448,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
                       children: [
                         Text(
                           'Choose a file containing at least one data table '
-                          'using the green button in the corner.',
+                          'using the green button in the corner below.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 20.0,
@@ -454,8 +460,12 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
                         RaisedButton(
                           padding: EdgeInsets.all(16.0),
                           child: Text(
-                            'Want to read Lotus LED Lights\' inventory but '
-                            'don\'t have permission? Click this button for help.',
+                            'Want to have access to Lotus LED Lights\' models, '
+                            'inventory, and prices but don\'t have permission? '
+                            'Click this button for help.',
+                            style: TextStyle(
+                              fontSize: 16.0,
+                            ),
                           ),
                           onPressed: HelpAndSupport.showRequestMethods,
                         ),

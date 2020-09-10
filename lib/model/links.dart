@@ -8,4 +8,6 @@ class Links {
   static const DEVELOPER_WEBSITE = 'https://alensugimoto.github.io';
   static const DEVELOPER_LINKEDIN = 'https://www.linkedin.com/in/alensugimoto/';
   static const DEVELOPER_GITHUB = 'https://github.com/alensugimoto';
+  static const DROPBOX_CONNECTED_APPS = 'https://www.dropbox.com/account/connected_apps';
+  static const GOOGLE_CONNECTED_APPS = 'https://myaccount.google.com/permissions';
 }
