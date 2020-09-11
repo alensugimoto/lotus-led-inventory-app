@@ -28,11 +28,13 @@
       };
 
       function loadChooser() {
-        if (Dropbox.isBrowserSupported()) {
-          Dropbox.choose(options);
-        } else {
-          alert("Browser is not supported");
-        }
+//         if (Dropbox.isBrowserSupported()) {
+//           Dropbox.choose(options);
+//         } else {
+//           alert("Browser is not supported");
+//         }
+        var button = Dropbox.createChooseButton(options);
+        document.getElementById("container").appendChild(button);
       }
 
     </script>
