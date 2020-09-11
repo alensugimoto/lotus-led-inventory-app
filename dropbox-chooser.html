@@ -28,21 +28,20 @@
       };
 
       function loadChooser() {
-//         if (Dropbox.isBrowserSupported()) {
-//           Dropbox.choose(options);
-//         } else {
-//           alert("Browser is not supported");
-//         }
-        var button = Dropbox.createChooseButton(options);
-        document.getElementById("result").appendChild(button);
+        if (Dropbox.isBrowserSupported()) {
+          Dropbox.choose(options);
+        } else {
+          alert("Browser is not supported");
+        }
       }
 
     </script>
   </head>
   <body>
     <div id="result"></div>
+    <button onclick="loadChooser()">Dropbox Chooser</button>
 
     <!-- The Google API Loader script. -->
-    <script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js?onload=loadChooser" id="dropboxjs" data-app-key="3ss8bafc9ujv2hx"></script>
+    <script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="3ss8bafc9ujv2hx"></script>
   </body>
 </html>
