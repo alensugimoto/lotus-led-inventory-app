@@ -7,6 +7,7 @@ import 'package:html/parser.dart';
 import 'package:intl/intl.dart';
 import 'package:lotus_led_inventory/model/provider_data.dart';
 import 'package:lotus_led_inventory/screens/help_and_support/help_and_support.dart';
+import 'package:lotus_led_inventory/screens/inventory/web_view_container.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
@@ -52,7 +53,11 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
           fit: BoxFit.none,
         ),
       ),
-      onTapWidget: GoogleDrive(),
+      onTapWidget: WebViewContainer(
+        url: GoogleDrive.PICKER_URL,
+        isPicker: true,
+        clientId: '',
+      ),
     ),
     ProviderData(
       name: Dropbox.NAME,
@@ -64,7 +69,11 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
           fit: BoxFit.none,
         ),
       ),
-      onTapWidget: Dropbox(),
+      onTapWidget: WebViewContainer(
+        url: Dropbox.CHOOSER_URL,
+        isPicker: true,
+        clientId: '',
+      ),
     ),
     ProviderData(
       name: 'Device',
