@@ -1,7 +1,7 @@
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
-import 'package:lotus_led_inventory/screens/inventory/dropbox.dart';
-import 'package:lotus_led_inventory/screens/inventory/google_drive.dart';
+import 'package:lotus_led_inventory/model/dropbox.dart';
+import 'package:lotus_led_inventory/model/google_drive.dart';
 
 class CustomSwitchTile extends StatefulWidget {
   final String permission;

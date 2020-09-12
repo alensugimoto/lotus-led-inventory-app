@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lotus_led_inventory/app_drawer/app_drawer.dart';
+import 'package:lotus_led_inventory/model/google_drive.dart';
 import 'package:lotus_led_inventory/model/links.dart';
 import 'package:lotus_led_inventory/screens/help_and_support/contact_info_tile.dart';
-import 'package:lotus_led_inventory/screens/inventory/dropbox.dart';
-import 'package:lotus_led_inventory/screens/inventory/google_drive.dart';
+import 'package:lotus_led_inventory/model/dropbox.dart';
 import 'package:lotus_led_inventory/screens/settings/custom_switch_tile.dart';
 
 import '../../app.dart';
