@@ -1,19 +1,25 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
 import 'package:intl/intl.dart';
-import 'package:lotus_led_inventory/model/device_storage.dart';
-import 'package:lotus_led_inventory/model/google_drive.dart';
+import 'package:lotus_led_inventory/model/provider_data.dart';
 import 'package:lotus_led_inventory/screens/help_and_support/help_and_support.dart';
+import 'package:lotus_led_inventory/screens/inventory/web_view_container.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
+import 'package:path/path.dart' as p;
 
+import '../../app.dart';
 import '../../model/try_catch.dart';
 import '../../app_drawer/app_drawer.dart';
 import 'fitted_text.dart';
 import 'results.dart';
-import '../../model/dropbox.dart';
+import 'google_drive.dart';
+import 'dropbox.dart';
 import '../../model/file_data.dart';
 import '../../model/spreadsheet.dart';
 import '../../model/sheet.dart';
@@ -36,22 +42,169 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
 
   final _key = GlobalKey<RefreshIndicatorState>();
   static Spreadsheet spread;
+  final List<ProviderData> _providers = [
+    ProviderData(
+      name: GoogleDrive.NAME,
+      hasApi: true,
+      dialWidget: ClipOval(
+        child: Image.asset(
+          GoogleDrive.GLYPH_PATH,
+          scale: 35.0,
+          fit: BoxFit.none,
+        ),
+      ),
+      onTapWidget: WebViewContainer(
+        url: GoogleDrive.PICKER_URL,
+        isPicker: true,
+        clientId: '',
+      ),
+    ),
+    ProviderData(
+      name: Dropbox.NAME,
+      hasApi: true,
+      dialWidget: ClipOval(
+        child: Image.asset(
+          Dropbox.GLYPH_PATH,
+          scale: 9.0,
+          fit: BoxFit.none,
+        ),
+      ),
+      onTapWidget: WebViewContainer(
+        url: Dropbox.CHOOSER_URL,
+        isPicker: true,
+        clientId: '',
+      ),
+    ),
+    ProviderData(
+      name: 'Device',
+      hasApi: false,
+      dialWidget: Icon(
+        Icons.storage,
+        color: Colors.grey,
+      ),
+    ),
+  ];
 
   Widget speedDial() {
     return SpeedDial(
       onOpen: () => setState(() => speedDialIsOpen = true),
       onClose: () => setState(() => speedDialIsOpen = false),
       child: speedDialIsOpen ? Icon(Icons.close) : Icon(Icons.add),
-      children: [
-        GoogleDrive.speedDialChild(context),
-        Dropbox.speedDialChild(context),
-        DeviceStorage.speedDialChild(
-          context,
-          beforeAwait: () => setState(() => isLoading = true),
-          afterAwait: () => setState(() => isLoading = false),
-        )
-      ],
+      children: speedDialChildren(),
     );
+  }
+
+  List<SpeedDialChild> speedDialChildren() {
+    return _providers.map(
+      (providerData) {
+        return SpeedDialChild(
+          child: Center(
+            child: Tooltip(
+              message: 'Add from ${providerData.name}',
+              child: CircleAvatar(
+                backgroundColor: Colors.white,
+                child: providerData.dialWidget,
+              ),
+            ),
+          ),
+          onTap: () async {
+            if (providerData.hasApi) {
+              await _pickFileWithApi(providerData);
+            } else {
+              await _pickFileWithFilePicker();
+            }
+          },
+        );
+      },
+    ).toList();
+  }
+
+  Future<void> _pickFileWithApi(
+    ProviderData providerData,
+  ) async {
+    await TryCatch.onWifi(() async {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => providerData.onTapWidget,
+        ),
+      );
+    });
+  }
+
+  Future<void> _pickFileWithFilePicker() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final fileData = await _getFutureFileDataWithFilePicker();
+
+    if (fileData != null) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => Inventory(fileData),
+        ),
+        (route) => false,
+      );
+    }
+  }
+
+  Future<FileData> _getFutureFileDataWithFilePicker() async {
+    const List<String> allowedExtensions = [
+      'xlsx',
+      'ods',
+      'html',
+      'htm',
+    ];
+
+    String filePath;
+    try {
+      filePath = await FilePicker.getFilePath(
+        type: FileType.custom,
+        allowedExtensions: allowedExtensions,
+      );
+    } catch (_) {}
+
+    if (filePath == null) {
+      return null;
+    }
+
+    final String ext = p.extension(filePath).replaceAll('.', '');
+
+    if (allowedExtensions.contains(ext)) {
+      final bytes = await File(filePath).readAsBytes();
+      final fileData = FileData(
+        provider: null,
+        name: p.basename(filePath),
+        id: null,
+        mimeType: mimeFromExtension(ext),
+        dateTime: DateTime.now().toIso8601String(),
+        bytes: bytes,
+      );
+      await fileData.save();
+
+      return fileData;
+    } else {
+      showDialog(
+        context: App.navigatorKey.currentState.overlay.context,
+        builder: (context) => AlertDialog(
+          title: Text('Failed to Read File'),
+          content: Text(
+            'The chosen file couldn\'t be read. Make sure its extension is'
+            ' one of the following: ${allowedExtensions.join(', ')}.',
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      );
+
+      return null;
+    }
   }
 
   @override
@@ -75,15 +228,17 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
             if (seconds >= refreshSeconds) {
               flushbar.show(context);
             } else {
-              Future.delayed(Duration(seconds: refreshSeconds - seconds),
-                  () async {
-                await refreshReminder(() async {
-                  if (flushbar?.isShowing() ?? false) {
-                    await flushbar.dismiss();
-                  }
-                  flushbar.show(context);
-                });
-              });
+              Future.delayed(
+                Duration(seconds: refreshSeconds - seconds),
+                () async {
+                  await refreshReminder(() async {
+                    if (flushbar?.isShowing() ?? false) {
+                      await flushbar.dismiss();
+                    }
+                    flushbar.show(context);
+                  });
+                }
+              );
             }
           }
         });
@@ -192,14 +347,17 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
 
     await setSpread();
 
-    Future.delayed(Duration(seconds: refreshSeconds), () async {
-      await refreshReminder(() async {
-        if (flushbar?.isShowing() ?? false) {
-          await flushbar.dismiss();
-        }
-        flushbar.show(context);
-      });
-    });
+    Future.delayed(
+      Duration(seconds: refreshSeconds),
+      () async {
+        await refreshReminder(() async {
+          if (flushbar?.isShowing() ?? false) {
+            await flushbar.dismiss();
+          }
+          flushbar.show(context);
+        });
+      }
+    );
 
     return null;
   }
