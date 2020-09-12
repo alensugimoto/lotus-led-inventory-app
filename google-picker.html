@@ -84,7 +84,7 @@
   </head>
   <body>
     <div id="result"></div>
-    <button onclick="loadPicker({success: function() {}, cancel: function() {}, mimeTypes: 'image/png,image/jpeg,image/jpg'})">Manually Load Picker</button>
+    <button onclick="loadPicker({success: function(files) {}, cancel: function() {}, mimeTypes: 'image/png,image/jpeg,image/jpg'})">Manually Load Picker</button>
 
     <!-- The Google API Loader script. -->
     <script type="text/javascript" src="https://apis.google.com/js/api.js"></script>
