@@ -5,36 +5,13 @@
     <title>Dropbox Chooser</title>
 
     <script type="text/javascript">
-    
-      var options = {
-
-        // Required. Called when a user selects an item in the Chooser.
-        success: function(files) {
-          alert("Here's the file id and name: " + files[0].id + " " + files[0].name);
-        },
-
-        // Optional. Called when the user closes the dialog without selecting a file
-        // and does not include any parameters.
-        cancel: function() {
-          alert("Cancelled");
-        },
-
-        // Optional. This is a list of file extensions. If specified, the user will
-        // only be able to select files with these extensions. You may also specify
-        // file types, such as "video" or "images" in the list. For more information,
-        // see File types below. By default, all extensions are allowed.
-        // extensions: ['.pdf', '.doc', '.docx'],
-
-      };
-
-      function loadChooser() {
-//         if (Dropbox.isBrowserSupported()) {
-//           Dropbox.choose(options);
-//         } else {
-          alert("Browser is not supported");
-//         }
+      function loadChooser(options, onUnsupportedBrowser) {
+        if (Dropbox.isBrowserSupported()) {
+          Dropbox.choose(options);
+        } else {
+          onUnsupportedBrowser();
+        }
       }
-
     </script>
   </head>
   <body>
