@@ -25,8 +25,6 @@ class GoogleDrive extends StatelessWidget {
   static const String NAME = 'Google Drive';
   static const String ROOT_ID = 'root';
   static const String GLYPH_PATH = 'assets/DriveGlyph_Color.png';
-  static const String PICKER_URL =
-      'https://alensugimoto.github.io/lotus-led-inventory-app/google-picker.html';
   static const List<String> READ_SCOPES = [
     'https://www.googleapis.com/auth/drive.readonly',
   ];
@@ -48,9 +46,9 @@ class GoogleDrive extends StatelessWidget {
     503,
     504,
   ];
-  static const String androidClientId =
+  static const String _androidClientId =
       '870429610804-87oatltl467p76ba1hb2nbpg7he3hbc6.apps.googleusercontent.com';
-  static const String iosClientId =
+  static const String _iosClientId =
       '870429610804-3ni7p17b5rmmml3qi5j5auqrn728j5kg.apps.googleusercontent.com';
 
   static final List<String> allowedMimeTypes = allowedExtensions
@@ -69,7 +67,7 @@ class GoogleDrive extends StatelessWidget {
 
     helper.setAuthorizationParams(
       grantType: OAuth2Helper.AUTHORIZATION_CODE,
-      clientId: Platform.isAndroid ? androidClientId : iosClientId,
+      clientId: Platform.isAndroid ? _androidClientId : _iosClientId,
       scopes: scopes,
     );
 
@@ -115,10 +113,7 @@ class GoogleDrive extends StatelessWidget {
     return true;
   }
 
-  static Future<bool> getToken(
-    List<String> scopes,
-    void Function() onError,
-  ) async {
+  static Future<bool> getToken(List<String> scopes, void Function() onError) async {
     var helper = getOAuth2Helper(scopes);
 
     var tknResp = await TryCatch.toGetApiResponse(

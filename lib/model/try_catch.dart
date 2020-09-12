@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:oauth2_client/access_token_response.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../app.dart';
@@ -64,11 +65,14 @@ class TryCatch {
     var resp;
     try {
       resp = await getApiResponse();
-    } catch (_) {
+    } catch (e, stack) {
+      print(e);
+      print(stack);
       return null;
     }
     if (resp.runtimeType == Response &&
         errorsByStatusCode.contains(resp.statusCode)) {
+      print(resp.body);
       return null;
     }
     return resp;

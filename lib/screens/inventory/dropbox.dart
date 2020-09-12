@@ -28,8 +28,6 @@ class Dropbox extends StatelessWidget {
   static const String ROOT_PATH = '';
   static const String GLYPH_PATH = 'assets/DropboxGlyph_Blue.png';
   static const String APP_KEY = '3ss8bafc9ujv2hx';
-  static const String CHOOSER_URL =
-      'https://alensugimoto.github.io/lotus-led-inventory-app/dropbox-chooser.html';
   static const List<String> READ_CONTENT_SCOPES = [
     'files.content.read',
     'files.metadata.read',
