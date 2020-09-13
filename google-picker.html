@@ -19,10 +19,10 @@
       var appId = "870429610804";
 
       // Scope to use to access user's Drive items.
-      var scope = ['https://www.googleapis.com/auth/drive.file'];
+      //var scope = ['https://www.googleapis.com/auth/drive.file'];
 
       var pickerApiLoaded = false;
-      var oauthToken;
+      //var oauthToken;
 
       // Options (success, cancel, mimeTypes)
       var options;
@@ -30,41 +30,41 @@
       // Use the Google API Loader script to load the google.picker script.
       function loadPicker(options) {
         this.options = options;
-        gapi.load('auth', {'callback': onAuthApiLoad});
+        //gapi.load('auth', {'callback': onAuthApiLoad});
         gapi.load('picker', {'callback': onPickerApiLoad});
       }
 
-      function onAuthApiLoad() {
-        window.gapi.auth.authorize(
-            {
-              'client_id': clientId,
-              'scope': scope,
-              'immediate': false
-            },
-            handleAuthResult);
-      }
+//       function onAuthApiLoad() {
+//         window.gapi.auth.authorize(
+//             {
+//               'client_id': clientId,
+//               'scope': scope,
+//               'immediate': false
+//             },
+//             handleAuthResult);
+//       }
 
       function onPickerApiLoad() {
         pickerApiLoaded = true;
         createPicker();
       }
 
-      function handleAuthResult(authResult) {
-        if (authResult && !authResult.error) {
-          oauthToken = authResult.access_token;
-          createPicker();
-        }
-      }
+//       function handleAuthResult(authResult) {
+//         if (authResult && !authResult.error) {
+//           oauthToken = authResult.access_token;
+//           createPicker();
+//         }
+//       }
 
       // Create and render a Picker object for searching images.
       function createPicker() {
-        if (pickerApiLoaded && oauthToken) {
+        if (pickerApiLoaded) {// && oauthToken) {
           var view = new google.picker.View(google.picker.ViewId.DOCS);
           view.setMimeTypes(options.mimeTypes);
           var picker = new google.picker.PickerBuilder()
               .setSize(566,350)
               .setAppId(appId)
-              .setOAuthToken(oauthToken)
+              //.setOAuthToken(oauthToken)
               .addView(view)
               .setDeveloperKey(developerKey)
               .setCallback(pickerCallback)
