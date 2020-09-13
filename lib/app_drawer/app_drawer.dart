@@ -16,12 +16,12 @@ class AppDrawer extends StatefulWidget {
 }
 
 class _AppDrawerState extends State<AppDrawer> {
-  bool loading;
+  bool isLoading;
 
   @override
   void initState() {
     super.initState();
-    loading = false;
+    isLoading = false;
   }
 
   @override
@@ -47,14 +47,13 @@ class _AppDrawerState extends State<AppDrawer> {
                   ),
                   Divider(),
                   ListTile(
-                    leading: loading
+                    leading: isLoading
                         ? CircularProgressIndicator()
                         : Icon(Icons.home),
                     title: Text('Home'),
                     onTap: () async {
-                      setState(() {
-                        loading = true;
-                      });
+                      setState(() => isLoading = true);
+
                       final prefs = await SharedPreferences.getInstance();
                       final jsonString = prefs.getString(SharedPrefs.FILE);
 
@@ -67,6 +66,8 @@ class _AppDrawerState extends State<AppDrawer> {
                           ),
                         ),
                       );
+
+                      setState(() => isLoading = false);
                     },
                   ),
                   ListTile(

@@ -35,11 +35,12 @@ class Inventory extends StatefulWidget {
 class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   bool speedDialIsOpen;
   String dateTime;
-  Flushbar flushbar;
+  SnackBar snackBar;
   bool isLoading;
-  static const int refreshSeconds = 300;
+  static const int snooze = 300;
 
-  final _key = GlobalKey<RefreshIndicatorState>();
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _refreshKey = GlobalKey<RefreshIndicatorState>();
   static Spreadsheet spread;
   final List<ProviderData> _providers = [
     ProviderData(
@@ -216,19 +217,17 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
           if (dateTime != null) {
             int seconds =
                 DateTime.now().difference(DateTime.parse(dateTime)).inSeconds;
-            if (seconds >= refreshSeconds) {
-              flushbar.show(context);
+            if (seconds >= snooze) {
+              _scaffoldKey.currentState?.showSnackBar(snackBar);
             } else {
               Future.delayed(
-                Duration(seconds: refreshSeconds - seconds),
+                Duration(seconds: snooze - seconds),
                 () async {
                   await refreshReminder(() async {
-                    if (flushbar?.isShowing() ?? false) {
-                      await flushbar.dismiss();
-                    }
-                    flushbar.show(context);
+                    _scaffoldKey.currentState?.removeCurrentSnackBar();
+                    _scaffoldKey.currentState?.showSnackBar(snackBar);
                   });
-                }
+                },
               );
             }
           }
@@ -332,41 +331,37 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   }
 
   Future<Null> _refresh() async {
-    if (flushbar?.isShowing() ?? false) {
-      await flushbar.dismiss();
-    }
+    _scaffoldKey.currentState?.removeCurrentSnackBar();
 
     await setSpread();
 
     Future.delayed(
-      Duration(seconds: refreshSeconds),
+      Duration(seconds: snooze),
       () async {
         await refreshReminder(() async {
-          if (flushbar?.isShowing() ?? false) {
-            await flushbar.dismiss();
-          }
-          flushbar.show(context);
+          _scaffoldKey.currentState?.removeCurrentSnackBar();
+          _scaffoldKey.currentState?.showSnackBar(snackBar);
         });
-      }
+      },
     );
 
     return null;
   }
 
   Future<void> refreshReminder(Future<void> Function() show) async {
-    if (flushbar == null) {
-      flushbar = Flushbar(
-        message: 'Remember to refresh the list once in a while. The'
-            ' refresh button is on the top right corner of the screen.',
-        mainButton: FlatButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: Text(
-            'Dismiss',
-            style: TextStyle(color: Theme.of(context).primaryColor),
-          ),
+    if (snackBar == null) {
+      snackBar = SnackBar(
+        content: Text(
+          'Remember to refresh the list once in a while. The'
+          ' refresh button is on the top right corner of the screen.',
         ),
+        action: SnackBarAction(
+          onPressed: () {
+            _scaffoldKey.currentState?.removeCurrentSnackBar();
+          },
+          label: 'Dismiss',
+        ),
+        duration: Duration(days: 365),
       );
     }
     await show();
@@ -400,15 +395,24 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
     );
   }
 
-  List<Widget> actions() {
+  List<Widget> actions(bool enabled) {
+    final flushbar = Flushbar(
+      message: 'Please complete step one before using this button.',
+      duration: Duration(seconds: 4),
+    );
+
     Widget refresh = Tooltip(
       message: 'Refresh',
       child: IconButton(
         icon: Icon(Icons.refresh),
         onPressed: () async {
-          await TryCatch.onWifi(() async {
-            _key.currentState.show();
-          });
+          if (enabled) {
+            await TryCatch.onWifi(() async {
+              _refreshKey.currentState?.show();
+            });
+          } else {
+            flushbar.show(context);
+          }
         },
       ),
     );
@@ -418,7 +422,11 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       child: IconButton(
         icon: Icon(Icons.search),
         onPressed: () {
-          showSearch(context: context, delegate: CustomSearchDelegate());
+          if (enabled) {
+            showSearch(context: context, delegate: CustomSearchDelegate());
+          } else {
+            flushbar.show(context);
+          }
         },
       ),
     );
@@ -436,9 +444,12 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
               child: CircularProgressIndicator(),
             ),
           )
-        : spread == null
+        : spread != null
             ? Scaffold(
-                appBar: AppBar(),
+                appBar: AppBar(
+                  title: Text('Set-Up Screen'),
+                  actions: actions(false),
+                ),
                 drawer: AppDrawer(),
                 body: Center(
                   child: Padding(
@@ -446,26 +457,42 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          'Choose a file containing at least one data table '
-                          'using the green button in the corner below.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 20.0,
-                            color: Colors.black,
-                            fontWeight: FontWeight.w400,
+                        ListTile(
+                          title: Text(
+                            'Choose a file containing at least one data table '
+                            'using the green button in the corner below.',
                           ),
+                          leading: Icon(Icons.filter_1),
+                        ),
+                        ListTile(
+                          title: Text(
+                            'Use the newly loaded page and the search button '
+                            'in the top right corner to navigate through the contents '
+                            'of the file.',
+                          ),
+                          leading: Icon(Icons.filter_2),
+                        ),
+                        ListTile(
+                          title: Text(
+                            'Press the refresh button in the top right corner '
+                            'once in a while to get the lastest version of '
+                            'your file.',
+                          ),
+                          leading: Icon(Icons.filter_3),
                         ),
                         SizedBox(height: 30.0),
                         RaisedButton(
-                          padding: EdgeInsets.all(16.0),
-                          child: Text(
-                            'Want to have access to Lotus LED Lights\' models, '
-                            'inventory, and prices but don\'t have permission? '
-                            'Click this button for help.',
-                            style: TextStyle(
-                              fontSize: 16.0,
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16.0,
+                            horizontal: 8.0,
+                          ),
+                          child: ListTile(
+                            title: Text(
+                              'Want to have access to Lotus LED Lights\' models, '
+                              'inventory, and prices but don\'t have permission? '
+                              'Click this button for help.',
                             ),
+                            leading: Icon(Icons.help),
                           ),
                           onPressed: HelpAndSupport.showRequestMethods,
                         ),
@@ -478,6 +505,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
             : DefaultTabController(
                 length: spread.tables.keys.length,
                 child: Scaffold(
+                  key: _scaffoldKey,
                   appBar: spread.tables.keys.length > 1
                       ? AppBar(
                           title: title(),
@@ -487,15 +515,15 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
                                 .map((e) => Tab(text: e))
                                 .toList(),
                           ),
-                          actions: actions(),
+                          actions: actions(true),
                         )
                       : AppBar(
                           title: title(),
-                          actions: actions(),
+                          actions: actions(true),
                         ),
                   drawer: AppDrawer(),
                   body: RefreshIndicator(
-                    key: _key,
+                    key: _refreshKey,
                     onRefresh: _refresh,
                     child: TabBarView(
                       physics: NeverScrollableScrollPhysics(),

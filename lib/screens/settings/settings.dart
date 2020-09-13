@@ -24,12 +24,14 @@ class Settings extends StatelessWidget {
             ),
           ),
           CustomSwitchTile(
-            permission: 'Read the content of all your ${GoogleDrive.NAME} files',
+            permission:
+                'Read the content of all your ${GoogleDrive.NAME} files',
             provider: GoogleDrive.NAME,
             scopes: GoogleDrive.READ_CONTENT_SCOPES,
           ),
           CustomSwitchTile(
-            permission: 'List and search through all your ${GoogleDrive.NAME} files',
+            permission:
+                'List and search through all your ${GoogleDrive.NAME} files',
             provider: GoogleDrive.NAME,
             scopes: GoogleDrive.READ_METADATA_SCOPES,
           ),
@@ -49,10 +51,26 @@ class Settings extends StatelessWidget {
             scopes: Dropbox.READ_CONTENT_SCOPES,
           ),
           CustomSwitchTile(
-            permission: 'List and search through all your ${Dropbox.NAME} files',
+            permission:
+                'List and search through all your ${Dropbox.NAME} files',
             provider: Dropbox.NAME,
             scopes: Dropbox.READ_METADATA_SCOPES,
           ),
+          // Divider(),
+          // ListTile(
+          //   title: Text(
+          //     'Refresh Reminders',
+          //     style: TextStyle(
+          //       color: Theme.of(context).primaryColor,
+          //       fontWeight: FontWeight.w600,
+          //     ),
+          //   ),
+          // ),
+          // SwitchListTile(
+          //   value: true,
+          //   title: Text('Send in-app refresh reminders'),
+          //   onChanged: (value) {},
+          // ),
         ],
       ),
     );
