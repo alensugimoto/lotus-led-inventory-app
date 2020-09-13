@@ -61,6 +61,7 @@
           var view = new google.picker.View(google.picker.ViewId.DOCS);
           view.setMimeTypes(options.mimeTypes);
           var picker = new google.picker.PickerBuilder()
+              .setSize(566,350)
               .setAppId(appId)
               .setOAuthToken(oauthToken)
               .addView(view)
