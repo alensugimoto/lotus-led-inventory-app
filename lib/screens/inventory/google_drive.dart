@@ -25,8 +25,11 @@ class GoogleDrive extends StatelessWidget {
   static const String NAME = 'Google Drive';
   static const String ROOT_ID = 'root';
   static const String GLYPH_PATH = 'assets/DriveGlyph_Color.png';
-  static const List<String> READ_SCOPES = [
+  static const List<String> READ_CONTENT_SCOPES = [
     'https://www.googleapis.com/auth/drive.readonly',
+  ];
+  static const List<String> READ_METADATA_SCOPES = [
+    'https://www.googleapis.com/auth/drive.metadata.readonly',
   ];
   static const List<String> allowedExtensions = [
     'xlsx',
@@ -46,9 +49,9 @@ class GoogleDrive extends StatelessWidget {
     503,
     504,
   ];
-  static const String _androidClientId =
+  static const String ANDROID_CLIENT_ID =
       '870429610804-87oatltl467p76ba1hb2nbpg7he3hbc6.apps.googleusercontent.com';
-  static const String _iosClientId =
+  static const String IOS_CLIENT_ID =
       '870429610804-3ni7p17b5rmmml3qi5j5auqrn728j5kg.apps.googleusercontent.com';
 
   static final List<String> allowedMimeTypes = allowedExtensions
@@ -67,7 +70,7 @@ class GoogleDrive extends StatelessWidget {
 
     helper.setAuthorizationParams(
       grantType: OAuth2Helper.AUTHORIZATION_CODE,
-      clientId: Platform.isAndroid ? _androidClientId : _iosClientId,
+      clientId: Platform.isAndroid ? ANDROID_CLIENT_ID : IOS_CLIENT_ID,
       scopes: scopes,
     );
 
@@ -78,7 +81,23 @@ class GoogleDrive extends StatelessWidget {
     String unencodedPath = '',
     Map<String, String> queryParameters,
   }) async {
-    var helper = getOAuth2Helper(READ_SCOPES);
+    List<String> scopes;
+
+    switch (unencodedPath) {
+      case '':
+        {
+          scopes = READ_METADATA_SCOPES;
+        }
+        break;
+
+      default:
+        {
+          scopes = READ_CONTENT_SCOPES;
+        }
+        break;
+    }
+
+    var helper = getOAuth2Helper(scopes);
 
     final Uri uri = Uri.https(
       'www.googleapis.com',
@@ -113,7 +132,10 @@ class GoogleDrive extends StatelessWidget {
     return true;
   }
 
-  static Future<bool> getToken(List<String> scopes, void Function() onError) async {
+  static Future<bool> getToken(
+    List<String> scopes,
+    void Function() onError,
+  ) async {
     var helper = getOAuth2Helper(scopes);
 
     var tknResp = await TryCatch.toGetApiResponse(
@@ -224,10 +246,10 @@ class GoogleDrive extends StatelessWidget {
                         itemCount: files.length,
                         itemBuilder: (context, index) {
                           bool isLoading = false;
-                          Map file = files[index];
-                          String id = file['id'];
+                          final Map file = files[index];
+                          final String id = file['id'];
+                          final String mime = file['mimeType'];
                           String name = file['name'];
-                          String mime = file['mimeType'];
                           bool isFile = false;
                           if (mime == 'application/vnd.google-apps.folder') {
                             name += '/';
@@ -235,52 +257,50 @@ class GoogleDrive extends StatelessWidget {
                             isFile = true;
                           }
                           return StatefulBuilder(
-                            builder: (context, setState) {
-                              return ListTile(
-                                leading: isLoading
-                                    ? CircularProgressIndicator()
-                                    : Icon(
-                                        isFile ? Icons.lock_open : Icons.folder,
-                                      ),
-                                title: Text(name),
-                                onTap: () async {
-                                  await TryCatch.onWifi(() async {
-                                    if (isFile) {
-                                      setState(() => isLoading = true);
+                            builder: (context, setState) => ListTile(
+                              leading: isLoading
+                                  ? CircularProgressIndicator()
+                                  : Icon(
+                                      isFile ? Icons.lock_open : Icons.folder,
+                                    ),
+                              title: Text(name),
+                              onTap: () async {
+                                await TryCatch.onWifi(() async {
+                                  if (isFile) {
+                                    setState(() => isLoading = true);
 
-                                      var fileData = await download(
-                                        fileId: id,
-                                        mime: mime,
-                                        provider: 'Google',
-                                        name: name,
-                                      );
+                                    var fileData = await download(
+                                      fileId: id,
+                                      mime: mime,
+                                      provider: 'Google',
+                                      name: name,
+                                    );
 
-                                      if (fileData != null) {
-                                        Navigator.of(
-                                          context,
-                                        ).pushAndRemoveUntil(
-                                          MaterialPageRoute(
-                                            builder: (context) => Inventory(
-                                              fileData,
-                                            ),
+                                    if (fileData != null) {
+                                      Navigator.of(
+                                        context,
+                                      ).pushAndRemoveUntil(
+                                        MaterialPageRoute(
+                                          builder: (context) => Inventory(
+                                            fileData,
                                           ),
-                                          (route) => false,
-                                        );
-                                      } else {
-                                        setState(() => isLoading = false);
-                                        Flushbar(
-                                          message: 'We couldn\'t access '
-                                              'your file',
-                                          duration: Duration(seconds: 2),
-                                        )..show(context);
-                                      }
+                                        ),
+                                        (route) => false,
+                                      );
                                     } else {
-                                      onFolderTap(id, name.replaceAll('/', ''));
+                                      setState(() => isLoading = false);
+                                      Flushbar(
+                                        message: 'We couldn\'t access '
+                                            'your file',
+                                        duration: Duration(seconds: 2),
+                                      )..show(context);
                                     }
-                                  });
-                                },
-                              );
-                            },
+                                  } else {
+                                    onFolderTap(id, name.replaceAll('/', ''));
+                                  }
+                                });
+                              },
+                            ),
                           );
                         },
                       ),
@@ -295,7 +315,7 @@ class GoogleDrive extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Future<List> futureFiles = GoogleDrive.list(
+    Future<List> futureFiles = list(
       filter: fileId,
       filterWithQuery: false,
     );
@@ -322,7 +342,7 @@ class GoogleDrive extends StatelessWidget {
                         setState(() => isLoadingSearch = true);
 
                         await TryCatch.onWifi(() async {
-                          List files = await GoogleDrive.list(
+                          List files = await list(
                             filter: '',
                             filterWithQuery: true,
                           );
@@ -349,7 +369,7 @@ class GoogleDrive extends StatelessWidget {
           ),
         ],
       ),
-      body: GoogleDrive.results(
+      body: results(
         futureFiles: futureFiles,
         onReload: () {
           Navigator.of(context).pushReplacement(

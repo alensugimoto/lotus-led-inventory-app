@@ -446,10 +446,12 @@ packages:
   oauth2_client:
     dependency: "direct main"
     description:
-      name: oauth2_client
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.4.6"
+      path: "."
+      ref: HEAD
+      resolved-ref: "6f35e54922550c699cff09ab249601a23b0ef8fc"
+      url: "https://github.com/alensugimoto/oauth2_client"
+    source: git
+    version: "1.5.0"
   package_config:
     dependency: transitive
     description:

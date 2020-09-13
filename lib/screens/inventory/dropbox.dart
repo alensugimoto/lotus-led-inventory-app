@@ -70,13 +70,12 @@ class Dropbox extends StatelessWidget {
   static Future<http.Response> getHttpResponse({
     @required bool isRPC,
     @required String unencodedPath,
-    @required Map<String, String> queryParameters,
+    @required Map<String, dynamic> queryParameters,
   }) async {
     List<String> scopes;
 
     switch (unencodedPath) {
       case '/list_folder':
-      case '/search_v2':
         {
           scopes = READ_METADATA_SCOPES;
         }
@@ -122,7 +121,6 @@ class Dropbox extends StatelessWidget {
 
     var tknResp = await helper.getTokenFromStorage();
     if (tknResp != null) {
-      await helper.post('https://api.dropboxapi.com/2/auth/token/revoke');
       await helper.tokenStorage.deleteToken(helper.scopes);
     }
 
@@ -158,36 +156,21 @@ class Dropbox extends StatelessWidget {
   }
 
   static Future<List> list({
-    @required bool filterWithQuery,
-    @required String filter,
+    @required bool recursive,
+    @required String path,
   }) async {
-    if (filterWithQuery) {
-      http.Response resp = await getHttpResponse(
-        isRPC: true,
-        unencodedPath: '/search_v2',
-        queryParameters: {'query': filter},
-      );
+    http.Response resp = await getHttpResponse(
+      isRPC: true,
+      unencodedPath: '/list_folder',
+      queryParameters: {'path': path, 'recursive': recursive},
+    );
 
-      if (resp == null) {
-        return [null];
-      }
-
-      Map<String, dynamic> fileList = json.decode(resp.body);
-      return fileList['matches'].map((e) => e['metadata']['metadata']).toList();
-    } else {
-      http.Response resp = await getHttpResponse(
-        isRPC: true,
-        unencodedPath: '/list_folder',
-        queryParameters: {'path': filter},
-      );
-
-      if (resp == null) {
-        return [null];
-      }
-
-      Map<String, dynamic> fileList = json.decode(resp.body);
-      return fileList['entries'];
+    if (resp == null) {
+      return [null];
     }
+
+    Map<String, dynamic> fileList = json.decode(resp.body);
+    return fileList['entries'];
   }
 
   static Future<FileData> download({
@@ -257,19 +240,23 @@ class Dropbox extends StatelessWidget {
                         itemCount: list.length,
                         itemBuilder: (context, index) {
                           bool isLoading = false;
-                          Map item = list[index];
+                          final Map item = list[index];
                           final fileSize = item['size'];
-                          final path = item['path_lower'];
+                          final path = item['id'];
+                          String name = item['name'];
                           bool isFile = false;
                           bool isDownloadable = false;
-                          var name = item['name'];
                           if (fileSize == null) {
                             name += '/';
                             isDownloadable = true;
                           } else {
                             isFile = true;
                             for (var ext in ALLOWED_EXTENSIONS) {
-                              if (p.extension(name).replaceAll('.', '') ==
+                              if (p
+                                      .extension(
+                                        name,
+                                      )
+                                      .replaceAll('.', '') ==
                                   ext) {
                                 isDownloadable = true;
                                 break;
@@ -284,15 +271,15 @@ class Dropbox extends StatelessWidget {
                                       isFile && isDownloadable
                                           ? Icons.lock_open
                                           : isFile && !isDownloadable
-                                              ? Icons.lock
+                                              ? Icons.lock_outline
                                               : Icons.folder,
                                     ),
                               title: Text(
                                 name,
                                 style: TextStyle(
-                                  color: !isDownloadable
-                                      ? Colors.grey
-                                      : Colors.black,
+                                  color: isDownloadable
+                                      ? Colors.black
+                                      : Colors.grey,
                                 ),
                               ),
                               onTap: () async {
@@ -358,16 +345,61 @@ class Dropbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Future<List> futureFiles = Dropbox.list(
-      filterWithQuery: false,
-      filter: filePath,
+    Future<List> futureFiles = list(
+      recursive: false,
+      path: filePath,
     );
+    bool isLoadingSearch = false;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(fileName),
+        actions: <Widget>[
+          StatefulBuilder(
+            builder: (context, setState) {
+              return isLoadingSearch
+                  ? Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.white,
+                        ),
+                      ),
+                    )
+                  : IconButton(
+                      icon: Icon(Icons.search),
+                      onPressed: () async {
+                        setState(() => isLoadingSearch = true);
+
+                        await TryCatch.onWifi(() async {
+                          List files = await list(
+                            path: '',
+                            recursive: true,
+                          );
+
+                          if (files[0] == null) {
+                            Flushbar(
+                              message:
+                                  'In order to search your Dropbox, you need to '
+                                  'give us permission to view it.',
+                              duration: Duration(seconds: 4),
+                            )..show(context);
+                          } else {
+                            showSearch(
+                              context: context,
+                              delegate: CustomSearchDelegate(files),
+                            );
+                          }
+                        });
+
+                        setState(() => isLoadingSearch = false);
+                      },
+                    );
+            },
+          ),
+        ],
       ),
-      body: Dropbox.results(
+      body: results(
         futureFiles: futureFiles,
         onReload: () {
           Navigator.of(context).pushReplacement(
@@ -391,6 +423,88 @@ class Dropbox extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+class CustomSearchDelegate extends SearchDelegate<Map<String, String>> {
+  final List files;
+
+  CustomSearchDelegate(this.files);
+
+  Future<List> searchList() async {
+    List newList = [];
+    for (var file in files) {
+      if (file['name'].toLowerCase().contains(query.toLowerCase())) {
+        newList.add(file);
+      }
+    }
+    return newList;
+  }
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return query.length == 0
+        ? Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            child: Center(child: Text('Please enter a query')),
+          )
+        : Dropbox.results(
+            futureFiles: searchList(),
+            onReload: () {},
+            onFolderTap: (String path, String name) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => Dropbox(
+                    filePath: path,
+                    fileName: name,
+                  ),
+                ),
+              );
+            },
+          );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return query.length == 0
+        ? Container()
+        : Dropbox.results(
+            futureFiles: searchList(),
+            onReload: () {},
+            onFolderTap: (String path, String name) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => Dropbox(
+                    filePath: path,
+                    fileName: name,
+                  ),
+                ),
+              );
+            },
+          );
   }
 }
 
