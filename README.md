@@ -1,4 +1,4 @@
-# The Lotus Inventory App
+# The Lotus LED Inventory App
 
 This app turns files containing tables into simple, searchable, syncable lists of data.
 
