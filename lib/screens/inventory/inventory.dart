@@ -431,7 +431,9 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       ),
     );
 
-    return widget.file.provider == null ? [search] : [search, refresh];
+    return !enabled
+        ? [search, refresh]
+        : widget.file.provider == null ? [search] : [search, refresh];
   }
 
   @override
