@@ -444,7 +444,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
               child: CircularProgressIndicator(),
             ),
           )
-        : spread != null
+        : spread == null
             ? Scaffold(
                 appBar: AppBar(
                   title: Text('Set-Up Screen'),
