@@ -1,37 +1,24 @@
-## Welcome to GitHub Pages
+## Welcome to the Homepage of the Lotus LED Inventory app
 
-You can use the [editor on GitHub](https://github.com/alensugimoto/lotus-led-inventory-app/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+This app turns files containing tables into simple, searchable, syncable lists of data.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+You just need to upload a file to the app, and you will be able to effortlessly navigate through the contents of its data tables without Internet connection.
 
-### Markdown
+It is also integrated with Google Drive™ and Dropbox, allowing you to refresh and read the most up-to-date version of your files with just one click.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+And in case you forget, the app lets you know when your data was last refreshed and reminds you to press the refresh button once in a while.
 
-```markdown
-Syntax highlighted code block
+Download the app on the [App Store](https://apps.apple.com/us/app/id1528472145) or the [Play Store](https://play.google.com/store/apps/details?id=com.lotusledlights.merchandprice).
 
-# Header 1
-## Header 2
-### Header 3
+### Policies
 
-- Bulleted
-- List
+By using this app, you are agreeing to our [Terms and Conditions](https://alensugimoto.github.io/lotus-led-inventory-app/terms-and-conditions) and [Privacy Policy](https://alensugimoto.github.io/lotus-led-inventory-app/privacy-policy).
 
-1. Numbered
-2. List
+### Trademark Notices
 
-**Bold** and _Italic_ and `Code` text
+- Dropbox and the Dropbox logo are trademarks of Dropbox, Inc.
+- Google Drive is a trademark of Google Inc. Use of this trademark is subject to Google Permissions.
 
-[Link](url) and ![Image](src)
-```
+### Help and Support
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/alensugimoto/lotus-led-inventory-app/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+Having trouble with the app? Please send an email to alensugimoto@gmail.com.
