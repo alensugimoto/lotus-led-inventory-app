@@ -45,8 +45,8 @@ class Welcome extends StatelessWidget {
                     SizedBox(height: 30.0),
                     Flexible(
                       child: Text(
-                        'View all your large tables effortlessly'
-                        ' in just one simple app.',
+                        'Instantly search and view data from your large tables '
+                        'effortlessly in just one simple app.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 20.0,
@@ -62,6 +62,7 @@ class Welcome extends StatelessWidget {
                       onPressed: () async {
                         final prefs = await SharedPreferences.getInstance();
                         prefs.setBool(SharedPrefs.GOT_STARTED, true);
+                        prefs.setInt(SharedPrefs.SNOOZE, 5);
 
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(

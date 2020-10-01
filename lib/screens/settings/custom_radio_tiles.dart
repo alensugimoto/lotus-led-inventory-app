@@ -1,11 +1,9 @@
-import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:lotus_led_inventory/model/shared_prefs.dart';
-import 'package:lotus_led_inventory/screens/inventory/dropbox.dart';
-import 'package:lotus_led_inventory/screens/inventory/google_drive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum Interval {
+  never,
   five,
   ten,
   fifteen,
@@ -18,31 +16,65 @@ class CustomRadioTiles extends StatefulWidget {
 }
 
 class _CustomRadioTilesState extends State<CustomRadioTiles> {
-  bool isSelected;
   bool isLoading;
-  Interval _interval;
+  SharedPreferences prefs;
 
   @override
   void initState() {
     super.initState();
-    isLoading = false;
-    isSelected = false;
-    _interval = Interval.five;
+    isLoading = true;
+    SharedPreferences.getInstance().then((value) {
+      prefs = value;
+      setState(() => isLoading = false);
+    });
   }
 
   Widget customRadioTile(int snooze, Interval value) {
+    Interval groupValue;
+
+    switch (prefs.getInt(SharedPrefs.SNOOZE)) {
+      case 0:
+        {
+          groupValue = Interval.never;
+        }
+        break;
+
+      case 5:
+        {
+          groupValue = Interval.five;
+        }
+        break;
+
+      case 10:
+        {
+          groupValue = Interval.ten;
+        }
+        break;
+
+      case 15:
+        {
+          groupValue = Interval.fifteen;
+        }
+        break;
+
+      case 30:
+        {
+          groupValue = Interval.thirty;
+        }
+        break;
+    }
+
     return RadioListTile<Interval>(
-      title: Text('$snooze minutes'),
-      value: Interval.five,
-      groupValue: _interval,
+      title: Text(snooze == 0 ? 'Never' : 'Every $snooze minutes'),
+      value: value,
+      groupValue: groupValue,
       onChanged: (Interval value) async {
         setState(() {
           isLoading = true;
-          _interval = value;
         });
 
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt(SharedPrefs.SNOOZE, 5);
+        await prefs.setInt(SharedPrefs.SNOOZE, snooze);
 
         setState(() => isLoading = false);
       },
@@ -52,41 +84,24 @@ class _CustomRadioTilesState extends State<CustomRadioTiles> {
   @override
   Widget build(BuildContext context) {
     return isLoading
-        ? ListTile(title: Center(child: CircularProgressIndicator()))
+        ? Column(
+            children: [
+              ListTile(
+                title: Text('Send in-app refresh reminders...'),
+                trailing: CircularProgressIndicator(),
+              ),
+            ],
+          )
         : Column(
             children: [
-              RadioListTile<Interval>(
-                title: Text('5 minutes'),
-                value: Interval.five,
-                groupValue: _interval,
-                onChanged: (Interval value) async {
-                  setState(() {
-                    isLoading = true;
-                    _interval = value;
-                  });
-
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setInt(SharedPrefs.SNOOZE, 5);
-
-                  setState(() => isLoading = false);
-                },
+              ListTile(
+                title: Text('Send in-app refresh reminders...'),
               ),
-              RadioListTile<Interval>(
-                title: Text('10 minutes'),
-                value: Interval.ten,
-                groupValue: _interval,
-                onChanged: (Interval value) async {
-                  setState(() {
-                    isLoading = true;
-                    _interval = value;
-                  });
-
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setInt(SharedPrefs.SNOOZE, 5);
-
-                  setState(() => isLoading = false);
-                },
-              ),
+              customRadioTile(0, Interval.never),
+              customRadioTile(5, Interval.five),
+              customRadioTile(10, Interval.ten),
+              customRadioTile(15, Interval.fifteen),
+              customRadioTile(30, Interval.thirty),
             ],
           );
   }

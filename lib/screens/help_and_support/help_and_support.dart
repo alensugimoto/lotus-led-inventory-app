@@ -100,20 +100,18 @@ class HelpAndSupport extends StatelessWidget {
             children: [
               Text(
                 'To request access to Lotus LED Lights\' models, inventory, '
-                'and prices, please do one of the following using your work '
-                'email address:',
+                'and prices, please use your work '
+                'email address to send an email to ...',
               ),
               ContactInfoTile(
-                subtitle: 'Send a request via email',
-                title: 'support@lotusledlights.com',
+                title: 'inventory@lotusledlights.com',
                 isLink: false,
               ),
-              Text('- OR -'),
-              ContactInfoTile(
-                subtitle: 'Send a request via link',
-                title: Links.LOTUS_INVENTORY,
-                isLink: true,
-              ),
+              Divider(),
+              Text(
+                'After receiving permission to access the file, use the '
+                'green "+" button on the set-up/home screen to pick that file.',
+              )
             ],
           ),
         ),

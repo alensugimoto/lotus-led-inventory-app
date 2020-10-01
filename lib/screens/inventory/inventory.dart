@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
 import 'package:intl/intl.dart';
 import 'package:lotus_led_inventory/model/provider_data.dart';
+import 'package:lotus_led_inventory/model/shared_prefs.dart';
 import 'package:lotus_led_inventory/screens/help_and_support/help_and_support.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
 import 'package:path/path.dart' as p;
 
@@ -37,7 +39,6 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   String dateTime;
   SnackBar snackBar;
   bool isLoading;
-  static const int snooze = 300;
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _refreshKey = GlobalKey<RefreshIndicatorState>();
@@ -124,9 +125,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   }
 
   Future<void> _pickFileWithFilePicker() async {
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
 
     final fileData = await _getFutureFileDataWithFilePicker();
 
@@ -138,6 +137,8 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
         (route) => false,
       );
     }
+
+    setState(() => isLoading = false);
   }
 
   Future<FileData> _getFutureFileDataWithFilePicker() async {
@@ -214,9 +215,13 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
         await refreshReminder(() async {
-          if (dateTime != null) {
-            int seconds =
-                DateTime.now().difference(DateTime.parse(dateTime)).inSeconds;
+          int snooze = await getSnoozeInSeconds();
+          if (dateTime != null && snooze != 0 && widget.file.provider != null) {
+            int seconds = DateTime.now()
+                .difference(
+                  DateTime.parse(dateTime),
+                )
+                .inSeconds;
             if (seconds >= snooze) {
               _scaffoldKey.currentState?.showSnackBar(snackBar);
             } else {
@@ -330,22 +335,32 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
     }
   }
 
+  Future<int> getSnoozeInSeconds() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(SharedPrefs.SNOOZE) * 60;
+  }
+
   Future<Null> _refresh() async {
-    _scaffoldKey.currentState?.removeCurrentSnackBar();
-
+    await snooze();
     await setSpread();
-
-    Future.delayed(
-      Duration(seconds: snooze),
-      () async {
-        await refreshReminder(() async {
-          _scaffoldKey.currentState?.removeCurrentSnackBar();
-          _scaffoldKey.currentState?.showSnackBar(snackBar);
-        });
-      },
-    );
-
     return null;
+  }
+
+  Future<void> snooze() async {
+    _scaffoldKey.currentState?.removeCurrentSnackBar();
+    int snooze = await getSnoozeInSeconds();
+
+    if (snooze != 0 && widget.file.provider != null) {
+      Future.delayed(
+        Duration(seconds: snooze),
+        () async {
+          await refreshReminder(() async {
+            _scaffoldKey.currentState?.removeCurrentSnackBar();
+            _scaffoldKey.currentState?.showSnackBar(snackBar);
+          });
+        },
+      );
+    }
   }
 
   Future<void> refreshReminder(Future<void> Function() show) async {
@@ -356,10 +371,10 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
           ' refresh button is on the top right corner of the screen.',
         ),
         action: SnackBarAction(
-          onPressed: () {
-            _scaffoldKey.currentState?.removeCurrentSnackBar();
+          onPressed: () async {
+            await snooze();
           },
-          label: 'Dismiss',
+          label: 'Snooze',
         ),
         duration: Duration(days: 365),
       );
@@ -368,11 +383,11 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   }
 
   Widget title() {
-    String timestamp = '${DateFormat(
-      'MMM d, y',
-    ).format(DateTime.parse(dateTime))} at ${DateFormat(
-      'kk:mm',
-    ).format(DateTime.parse(dateTime))}';
+    String timestamp = 'Last updated ${DateFormat.yMMMd().format(
+      DateTime.parse(dateTime),
+    )} ${DateFormat.Hm().format(
+      DateTime.parse(dateTime),
+    )}';
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -383,11 +398,11 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
           child: Text(widget.file.name),
         ),
         Tooltip(
-          message: 'Last Refreshed: $timestamp',
+          message: timestamp,
           child: Text(
             timestamp,
             style: TextStyle(
-              fontSize: 12.0,
+              fontSize: 11.9,
             ),
           ),
         ),
@@ -462,7 +477,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
                         ListTile(
                           title: Text(
                             'Choose a file containing at least one data table '
-                            'using the green button in the corner below.',
+                            'using the green "+" button in the corner below.',
                           ),
                           leading: Icon(Icons.filter_1),
                         ),
