@@ -383,9 +383,9 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   }
 
   Widget title() {
-    String timestamp = 'Last updated ${DateFormat.yMMMd().format(
+    String timestamp = 'Updated: ${DateFormat.Hm().format(
       DateTime.parse(dateTime),
-    )} ${DateFormat.Hm().format(
+    )} ${DateFormat('d MMM y').format(
       DateTime.parse(dateTime),
     )}';
 
