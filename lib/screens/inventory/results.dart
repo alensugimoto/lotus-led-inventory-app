@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:linkify/linkify.dart';
 
+import '../../model/try_catch.dart';
 import 'fitted_text.dart';
 import 'quantity_list.dart';
 import 'result.dart';
@@ -18,6 +20,8 @@ class _ResultsState extends State<Results>
     with AutomaticKeepAliveClientMixin<Results> {
   ScrollController _scrollController = ScrollController();
   bool _isScrollingDown;
+
+  static const double SPACING = 7.0;
 
   @override
   void initState() {
@@ -68,6 +72,19 @@ class _ResultsState extends State<Results>
         ),
       ),
     );
+  }
+
+  String extractLink(String input) {
+    var elements = linkify(input,
+        options: LinkifyOptions(
+          humanize: false,
+        ));
+    for (var e in elements) {
+      if (e is LinkableElement) {
+        return e.url;
+      }
+    }
+    return null;
   }
 
   @override
@@ -125,12 +142,28 @@ class _ResultsState extends State<Results>
                   start: 2,
                   end: 3,
                 );
-                bool cellsRestAreEmpty = FittedText(
+                bool cell3IsEmpty = FittedText(
                   widget._filteredResults,
                   row: index,
                 ).checkIsEmpty(
                   start: 3,
+                  end: 4,
                 );
+                bool cellsRestAreEmpty = FittedText(
+                  widget._filteredResults,
+                  row: index,
+                ).checkIsEmpty(
+                  start: 4,
+                );
+                String link = cell1IsEmpty
+                    ? null
+                    : extractLink(
+                        FittedText(
+                          widget._filteredResults,
+                          row: index,
+                          column: 1,
+                        ).fittedTextText(),
+                      );
 
                 return InkWell(
                   onTap: () {
@@ -147,93 +180,141 @@ class _ResultsState extends State<Results>
                   },
                   child: Card(
                     elevation: 3.0,
+                    shadowColor: Theme.of(context).primaryColor,
                     child: Padding(
                       padding: EdgeInsets.symmetric(
-                        vertical: 6.0,
-                        horizontal: 7.0,
+                        vertical: SPACING / 2,
+                        horizontal: SPACING,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          cell0IsEmpty && cell2IsEmpty
+                          cell0IsEmpty && cell3IsEmpty
                               ? Container()
-                              : !cell0IsEmpty && cell2IsEmpty
-                                  ? FittedText(
-                                      widget._filteredResults,
-                                      row: index,
-                                      column: 0,
-                                      fontSize: 18.0,
-                                      textAlign: TextAlign.left,
-                                      fontWeight: FontWeight.w900,
-                                    )
-                                  : cell0IsEmpty && !cell2IsEmpty
+                              : Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: SPACING / 2,
+                                  ),
+                                  child: cell3IsEmpty
                                       ? FittedText(
                                           widget._filteredResults,
                                           row: index,
-                                          column: 2,
+                                          column: 0,
                                           fontSize: 18.0,
-                                          textAlign: TextAlign.right,
-                                          fontWeight: FontWeight.w500,
+                                          textAlign: TextAlign.left,
+                                          fontWeight: FontWeight.w900,
                                         )
-                                      : Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: <Widget>[
-                                            Expanded(
-                                              child: FittedText(
-                                                widget._filteredResults,
-                                                row: index,
-                                                column: 0,
-                                                fontSize: 18.0,
-                                                textAlign: TextAlign.left,
-                                                fontWeight: FontWeight.w900,
-                                              ),
-                                            ),
-                                            SizedBox(width: 10.0),
-                                            ConstrainedBox(
-                                              constraints: BoxConstraints(
-                                                maxWidth: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.6,
-                                              ),
-                                              child: FittedText(
-                                                widget._filteredResults,
-                                                row: index,
-                                                column: 2,
-                                                fontSize: 18.0,
-                                                textAlign: TextAlign.right,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                          cell1IsEmpty
-                              ? Container()
-                              : Column(
-                                  children: <Widget>[
-                                    SizedBox(height: 5.0),
-                                    RichText(
-                                      text: TextSpan(
-                                        style:
-                                            DefaultTextStyle.of(context).style,
-                                        children: <TextSpan>[
-                                          TextSpan(
-                                            text: FittedText(
+                                      : cell0IsEmpty
+                                          ? FittedText(
                                               widget._filteredResults,
                                               row: index,
-                                              column: 1,
-                                            ).fittedTextText(),
-                                          ),
-                                        ],
-                                      ),
+                                              column: 3,
+                                              fontSize: 18.0,
+                                              textAlign: TextAlign.right,
+                                              fontWeight: FontWeight.w700,
+                                            )
+                                          : Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: <Widget>[
+                                                Expanded(
+                                                  child: FittedText(
+                                                    widget._filteredResults,
+                                                    row: index,
+                                                    column: 0,
+                                                    fontSize: 18.0,
+                                                    textAlign: TextAlign.left,
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 10.0),
+                                                ConstrainedBox(
+                                                  constraints: BoxConstraints(
+                                                    maxWidth:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            0.6,
+                                                  ),
+                                                  child: FittedText(
+                                                    widget._filteredResults,
+                                                    row: index,
+                                                    column: 3,
+                                                    fontSize: 18.0,
+                                                    textAlign: TextAlign.right,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                ),
+                          cell2IsEmpty
+                              ? Container()
+                              : Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: SPACING / 2,
+                                  ),
+                                  child: RichText(
+                                    text: TextSpan(
+                                      style: DefaultTextStyle.of(context).style,
+                                      children: <TextSpan>[
+                                        TextSpan(
+                                          text: FittedText(
+                                            widget._filteredResults,
+                                            row: index,
+                                            column: 2,
+                                          ).fittedTextText(),
+                                        ),
+                                      ],
                                     ),
-                                    SizedBox(height: 5.0),
-                                  ],
+                                  ),
                                 ),
                           cellsRestAreEmpty
                               ? Container()
-                              : QuantityList(index, widget._filteredResults),
+                              : Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: SPACING / 2,
+                                  ),
+                                  child: QuantityList(
+                                    index,
+                                    widget._filteredResults,
+                                  ),
+                                ),
+                          cell1IsEmpty || link == null
+                              ? Container()
+                              : Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: SPACING / 2,
+                                  ),
+                                  child: Container(
+                                    width: double.infinity,
+                                    height: 30.0,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: SPACING / 2,
+                                      horizontal: SPACING,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey,
+                                      borderRadius: BorderRadius.circular(5.0),
+                                    ),
+                                    child: Center(
+                                      child: Tooltip(
+                                        message: "SPEC SHEET",
+                                        child: Text(
+                                          "SPEC SHEET",
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                         ],
                       ),
                     ),
