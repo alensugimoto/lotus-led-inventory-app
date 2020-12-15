@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lotus_led_inventory/model/shared_prefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../model/shared_prefs.dart';
 
 enum Interval {
   never,
@@ -34,33 +35,19 @@ class _CustomRadioTilesState extends State<CustomRadioTiles> {
 
     switch (prefs.getInt(SharedPrefs.SNOOZE)) {
       case 0:
-        {
-          groupValue = Interval.never;
-        }
+        groupValue = Interval.never;
         break;
-
       case 5:
-        {
-          groupValue = Interval.five;
-        }
+        groupValue = Interval.five;
         break;
-
       case 10:
-        {
-          groupValue = Interval.ten;
-        }
+        groupValue = Interval.ten;
         break;
-
       case 15:
-        {
-          groupValue = Interval.fifteen;
-        }
+        groupValue = Interval.fifteen;
         break;
-
       case 30:
-        {
-          groupValue = Interval.thirty;
-        }
+        groupValue = Interval.thirty;
         break;
     }
 
@@ -69,13 +56,8 @@ class _CustomRadioTilesState extends State<CustomRadioTiles> {
       value: value,
       groupValue: groupValue,
       onChanged: (Interval value) async {
-        setState(() {
-          isLoading = true;
-        });
-
-        final prefs = await SharedPreferences.getInstance();
+        setState(() => isLoading = true);
         await prefs.setInt(SharedPrefs.SNOOZE, snooze);
-
         setState(() => isLoading = false);
       },
     );
@@ -83,26 +65,22 @@ class _CustomRadioTilesState extends State<CustomRadioTiles> {
 
   @override
   Widget build(BuildContext context) {
-    return isLoading
-        ? Column(
-            children: [
-              ListTile(
+    return Column(
+      children: [
+        isLoading
+            ? ListTile(
                 title: Text('Send in-app refresh reminders...'),
                 trailing: CircularProgressIndicator(),
-              ),
-            ],
-          )
-        : Column(
-            children: [
-              ListTile(
+              )
+            : ListTile(
                 title: Text('Send in-app refresh reminders...'),
               ),
-              customRadioTile(0, Interval.never),
-              customRadioTile(5, Interval.five),
-              customRadioTile(10, Interval.ten),
-              customRadioTile(15, Interval.fifteen),
-              customRadioTile(30, Interval.thirty),
-            ],
-          );
+        customRadioTile(0, Interval.never),
+        customRadioTile(5, Interval.five),
+        customRadioTile(10, Interval.ten),
+        customRadioTile(15, Interval.fifteen),
+        customRadioTile(30, Interval.thirty),
+      ],
+    );
   }
 }
