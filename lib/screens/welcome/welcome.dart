@@ -61,8 +61,8 @@ class Welcome extends StatelessWidget {
                       child: Text('Get Started'),
                       onPressed: () async {
                         final prefs = await SharedPreferences.getInstance();
-                        prefs.setBool(SharedPrefs.GOT_STARTED, true);
-                        prefs.setInt(SharedPrefs.SNOOZE, 5);
+                        await prefs.setBool(SharedPrefs.GOT_STARTED, true);
+                        await prefs.setInt(SharedPrefs.SNOOZE, 5);
 
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(

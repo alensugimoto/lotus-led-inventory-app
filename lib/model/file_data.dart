@@ -32,6 +32,6 @@ class FileData {
 
   Future<void> save() async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setString(SharedPrefs.FILE, json.encode(toJson()));
+    await prefs.setString(SharedPrefs.FILE, json.encode(toJson()));
   }
 }
