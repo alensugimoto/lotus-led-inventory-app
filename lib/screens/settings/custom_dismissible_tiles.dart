@@ -29,6 +29,7 @@ class _CustomDismissibleTilesState extends State<CustomDismissibleTiles> {
   @override
   Widget build(BuildContext context) {
     return Stack(
+      alignment: AlignmentDirectional.center,
       children: <Widget>[
         Column(
           children: <Widget>[
@@ -55,18 +56,13 @@ class _CustomDismissibleTilesState extends State<CustomDismissibleTiles> {
                         linkOption = null;
                       });
                     },
-              child: Text(
-                'Clear defaults',
-                textAlign: TextAlign.center,
-              ),
+              child: Text('Clear defaults'),
             ),
           ],
         ),
-        Center(
-          child: Visibility(
-            visible: isLoading,
-            child: CircularProgressIndicator(),
-          ),
+        Visibility(
+          visible: isLoading,
+          child: CircularProgressIndicator(),
         ),
       ],
     );

@@ -65,21 +65,25 @@ class _CustomRadioTilesState extends State<CustomRadioTiles> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        isLoading
-            ? ListTile(
-                title: Text('Send in-app refresh reminders...'),
-                trailing: CircularProgressIndicator(),
-              )
-            : ListTile(
-                title: Text('Send in-app refresh reminders...'),
-              ),
-        customRadioTile(0, Interval.never),
-        customRadioTile(5, Interval.five),
-        customRadioTile(10, Interval.ten),
-        customRadioTile(15, Interval.fifteen),
-        customRadioTile(30, Interval.thirty),
+    return Stack(
+      alignment: AlignmentDirectional.center,
+      children: <Widget>[
+        Column(
+          children: <Widget>[
+            ListTile(
+              title: Text('Send in-app refresh reminders...'),
+            ),
+            customRadioTile(0, Interval.never),
+            customRadioTile(5, Interval.five),
+            customRadioTile(10, Interval.ten),
+            customRadioTile(15, Interval.fifteen),
+            customRadioTile(30, Interval.thirty),
+          ],
+        ),
+        Visibility(
+          visible: isLoading,
+          child: CircularProgressIndicator(),
+        ),
       ],
     );
   }
