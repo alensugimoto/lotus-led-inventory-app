@@ -33,7 +33,7 @@ class _CustomRadioTilesState extends State<CustomRadioTiles> {
   Widget customRadioTile(int snooze, Interval value) {
     Interval groupValue;
 
-    switch (prefs.getInt(SharedPrefs.SNOOZE)) {
+    switch (prefs?.getInt(SharedPrefs.SNOOZE)) {
       case 0:
         groupValue = Interval.never;
         break;
@@ -57,7 +57,7 @@ class _CustomRadioTilesState extends State<CustomRadioTiles> {
       groupValue: groupValue,
       onChanged: (Interval value) async {
         setState(() => isLoading = true);
-        await prefs.setInt(SharedPrefs.SNOOZE, snooze);
+        await prefs?.setInt(SharedPrefs.SNOOZE, snooze);
         setState(() => isLoading = false);
       },
     );
