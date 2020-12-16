@@ -15,6 +15,8 @@
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		AD16AEB1258A3A3300D93DFD /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = AD16AEB0258A3A0B00D93DFD /* libsqlite3.tbd */; };
+		AD16AEB2258A3A6B00D93DFD /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = AD16AEB0258A3A0B00D93DFD /* libsqlite3.tbd */; };
 		AD6DC5B724E2AAD100FE01AC /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AD6DC5B624E2AAD100FE01AC /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
@@ -49,6 +51,7 @@
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A1B2B82E00B3D27D4C4D952C /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
+		AD16AEB0258A3A0B00D93DFD /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		AD6DC5B624E2AAD100FE01AC /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		C327075B00F27E85DDE6C10D /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -58,6 +61,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AD16AEB2258A3A6B00D93DFD /* libsqlite3.tbd in Frameworks */,
+				AD16AEB1258A3A3300D93DFD /* libsqlite3.tbd in Frameworks */,
 				434AA61C0235071CB5509B62 /* Pods_Runner.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -133,6 +138,7 @@
 		B9ADDECC503248C5E4490F25 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AD16AEB0258A3A0B00D93DFD /* libsqlite3.tbd */,
 				0CAA0FABB2074E1F97CC7884 /* Pods_Runner.framework */,
 			);
 			name = Frameworks;
