@@ -1,11 +1,19 @@
+import 'package:enum_to_string/enum_to_string.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:linkify/linkify.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../model/try_catch.dart';
+import '../../model/shared_prefs.dart';
 import 'fitted_text.dart';
 import 'quantity_list.dart';
 import 'result.dart';
+
+enum LinkOption {
+  download,
+  launch,
+}
 
 class Results extends StatefulWidget {
   final List<List<dynamic>> _filteredResults;
@@ -20,6 +28,7 @@ class _ResultsState extends State<Results>
     with AutomaticKeepAliveClientMixin<Results> {
   ScrollController _scrollController = ScrollController();
   bool _isScrollingDown;
+  bool _isSelected;
 
   static const double SPACING = 7.0;
 
@@ -27,6 +36,7 @@ class _ResultsState extends State<Results>
   void initState() {
     super.initState();
     _isScrollingDown = true;
+    _isSelected = false;
 
     _scrollController.addListener(() {
       if (_scrollController.position.userScrollDirection ==
@@ -75,16 +85,110 @@ class _ResultsState extends State<Results>
   }
 
   String extractLink(String input) {
-    var elements = linkify(input,
-        options: LinkifyOptions(
-          humanize: false,
-        ));
+    List<LinkifyElement> elements = linkify(input.trim());
+    String elink;
+
     for (var e in elements) {
-      if (e is LinkableElement) {
-        return e.url;
+      if (e is LinkableElement && elink == null) {
+        elink = e.url;
+      } else {
+        return null;
       }
     }
-    return null;
+    return elink;
+  }
+
+  Future<void> _activateLink(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    final linkOption = prefs.getString(SharedPrefs.LINK_OPTION);
+
+    switch (linkOption == null
+        ? await showDialog<LinkOption>(
+            context: context,
+            builder: (BuildContext context) {
+              return StatefulBuilder(
+                builder: (context, setState) => AlertDialog(
+                  title: Text(url),
+                  content: Container(
+                    width: double.maxFinite,
+                    child: ListView(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      children: <Widget>[
+                        ListTile(
+                          leading: Icon(Icons.file_download),
+                          title: Text(EnumToString.convertToString(
+                            LinkOption.download,
+                            camelCase: true,
+                          )),
+                          onTap: () {
+                            Navigator.pop(context, LinkOption.download);
+                          },
+                        ),
+                        ListTile(
+                          leading: Icon(Icons.launch),
+                          title: Text(EnumToString.convertToString(
+                            LinkOption.launch,
+                            camelCase: true,
+                          )),
+                          onTap: () {
+                            Navigator.pop(context, LinkOption.launch);
+                          },
+                        ),
+                        Divider(),
+                        CheckboxListTile(
+                          value: _isSelected,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          onChanged: (bool newValue) {
+                            setState(() {
+                              _isSelected = newValue;
+                            });
+                          },
+                          title: Text(
+                            'Remember this choice '
+                            'for all links in the "Home" screen',
+                          ),
+                        ),
+                        Divider(),
+                        Text(
+                          'You can clear default settings '
+                          'by using the "Clear defaults" button '
+                          'in the "Settings" screen',
+                          style: TextStyle(
+                            color: Colors.black54,
+                            fontSize: 15.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          )
+        : EnumToString.fromString(
+            LinkOption.values,
+            linkOption,
+          )) {
+      case LinkOption.download:
+        if (_isSelected && linkOption == null) {
+          await prefs.setString(
+            SharedPrefs.LINK_OPTION,
+            EnumToString.convertToString(LinkOption.download),
+          );
+        }
+        // TODO
+        break;
+      case LinkOption.launch:
+        if (_isSelected && linkOption == null) {
+          await prefs.setString(
+            SharedPrefs.LINK_OPTION,
+            EnumToString.convertToString(LinkOption.launch),
+          );
+        }
+        await TryCatch.open(context, url);
+        break;
+    }
   }
 
   @override
@@ -135,6 +239,13 @@ class _ResultsState extends State<Results>
                   start: 1,
                   end: 2,
                 );
+                bool cell1HeaderIsEmpty = FittedText(
+                  widget._filteredResults,
+                  row: 0,
+                ).checkIsEmpty(
+                  start: 1,
+                  end: 2,
+                );
                 bool cell2IsEmpty = FittedText(
                   widget._filteredResults,
                   row: index,
@@ -155,15 +266,13 @@ class _ResultsState extends State<Results>
                 ).checkIsEmpty(
                   start: 4,
                 );
-                String link = cell1IsEmpty
-                    ? null
-                    : extractLink(
-                        FittedText(
-                          widget._filteredResults,
-                          row: index,
-                          column: 1,
-                        ).fittedTextText(),
-                      );
+                String link = extractLink(
+                  FittedText(
+                    widget._filteredResults,
+                    row: index,
+                    column: 1,
+                  ).fittedTextText(),
+                );
 
                 return InkWell(
                   onTap: () {
@@ -281,39 +390,69 @@ class _ResultsState extends State<Results>
                                     widget._filteredResults,
                                   ),
                                 ),
-                          cell1IsEmpty || link == null
+                          link == null && cell1IsEmpty
                               ? Container()
                               : Padding(
                                   padding: EdgeInsets.symmetric(
                                     vertical: SPACING / 2,
                                   ),
-                                  child: Container(
-                                    width: double.infinity,
-                                    height: 30.0,
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: SPACING / 2,
-                                      horizontal: SPACING,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey,
-                                      borderRadius: BorderRadius.circular(5.0),
-                                    ),
-                                    child: Center(
-                                      child: Tooltip(
-                                        message: "SPEC SHEET",
-                                        child: Text(
-                                          "SPEC SHEET",
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w900,
+                                  child: link == null || cell1HeaderIsEmpty
+                                      ? RichText(
+                                          text: TextSpan(
+                                            style: DefaultTextStyle.of(context)
+                                                .style,
+                                            children: <TextSpan>[
+                                              TextSpan(
+                                                text: FittedText(
+                                                  widget._filteredResults,
+                                                  row: index,
+                                                  column: 1,
+                                                ).fittedTextText(),
+                                              ),
+                                            ],
                                           ),
-                                          textAlign: TextAlign.center,
+                                        )
+                                      : InkWell(
+                                          onTap: () async {
+                                            await _activateLink(link);
+                                          },
+                                          child: Ink(
+                                            width: double.infinity,
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: SPACING / 2,
+                                              horizontal: SPACING,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey,
+                                              borderRadius:
+                                                  BorderRadius.circular(5.0),
+                                            ),
+                                            child: Center(
+                                              child: Tooltip(
+                                                message: FittedText(
+                                                  widget._filteredResults,
+                                                  row: 0,
+                                                  column: 1,
+                                                ).fittedTextText(),
+                                                child: Text(
+                                                  FittedText(
+                                                    widget._filteredResults,
+                                                    row: 0,
+                                                    column: 1,
+                                                  ).fittedTextText(),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                  ),
                                 ),
                         ],
                       ),
