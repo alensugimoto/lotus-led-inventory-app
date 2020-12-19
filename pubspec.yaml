@@ -30,8 +30,6 @@ dependencies:
   shared_preferences: ^0.5.8
   after_layout: ^1.0.7+2
   package_info: ^0.4.3
-  linkify: ^3.0.0
-  enum_to_string: ^1.0.14
   firebase_core: ^0.4.5
   firebase_analytics: ^5.0.16
   flutter_secure_storage: ^3.3.3
@@ -43,6 +41,7 @@ dependencies:
   mime_type: ^0.3.2
   spreadsheet_decoder: ^1.1.0
   html: ^0.14.0+3
+  linkify: ^3.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
