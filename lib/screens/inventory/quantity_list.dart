@@ -43,16 +43,14 @@ class QuantityList extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      Text(
-                        FittedText(
-                          filteredLights,
-                          row: this.index,
-                          column: index,
-                        ).fittedTextText(),
-                        style: TextStyle(
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      FittedText(
+                        filteredLights,
+                        row: this.index,
+                        column: index,
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.w500,
+                        textAlign: TextAlign.center,
+                        infiniteLines: true,
                       ),
                       FittedText(
                         filteredLights,
@@ -62,16 +60,14 @@ class QuantityList extends StatelessWidget {
                         end: index + 1,
                       )
                           ? Container()
-                          : Text(
-                              FittedText(
-                                filteredLights,
-                                row: 0,
-                                column: index,
-                              ).fittedTextText(),
-                              style: TextStyle(
-                                fontSize: 13.0,
-                                fontWeight: FontWeight.w400,
-                              ),
+                          : FittedText(
+                              filteredLights,
+                              row: 0,
+                              column: index,
+                              fontSize: 13.0,
+                              fontWeight: FontWeight.w400,
+                              textAlign: TextAlign.center,
+                              infiniteLines: true,
                             ),
                     ],
                   ),

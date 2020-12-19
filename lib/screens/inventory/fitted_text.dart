@@ -1,23 +1,32 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:linkify/linkify.dart';
+import 'package:lotus_led_inventory/model/try_catch.dart';
 
 class FittedText extends StatelessWidget {
   final List<List<dynamic>> filteredResults;
   final int row;
   final int column;
   final double fontSize;
-  final bool includeLabel;
+  final bool includeTooltipLabel;
   final FontWeight fontWeight;
   final TextAlign textAlign;
+  final Color textColor;
+  final bool linkIsColored;
+  final bool infiniteLines;
 
   FittedText(
     this.filteredResults, {
     @required this.row,
     this.column,
-    this.includeLabel = false,
+    this.includeTooltipLabel = true,
     this.fontSize,
     this.fontWeight,
     this.textAlign,
+    this.textColor,
+    this.linkIsColored = true,
+    this.infiniteLines = false,
   });
 
   bool checkIsEmpty({int start = 0, int end, bool isLabel = false}) {
@@ -65,154 +74,50 @@ class FittedText extends StatelessWidget {
       } else {
         return '<?>' + (isLabel ? ': ' : '');
       }
-//      if (row == 0) {
-//        if (cellContent == null) {
-//          return '';
-//        } else if (cellContent.runtimeType == String) {
-//          return cellContent;
-//        } else if (cellContent.runtimeType == int ||
-//            cellContent.runtimeType == double) {
-//          return cellContent.toString().replaceAll(
-//            RegExp(r"([.]*0)(?!.*\d)"),
-//            '',
-//          );
-//        } else {
-//          return '<?>';
-//        }
-//      } else {
-//        if (column == 1) {
-//          if (cellContent == null) {
-//            return '';
-//          } else if (cellContent.runtimeType == String) {
-//            cellContent = cellContent.replaceAll('\$', '');
-//            if (double.tryParse(cellContent) == null) {
-//              return '\$<?>';
-//            } else {
-//              return '\$${NumberFormat("#,##0.00", "en_US").format(
-//                double.parse(cellContent),
-//              )}';
-//            }
-//          } else if (cellContent.runtimeType == int ||
-//              cellContent.runtimeType == double) {
-//            return '\$${NumberFormat("#,##0.00", "en_US").format(cellContent)}';
-//          } else {
-//            return '<?>';
-//          }
-//        } else {
-//          if (cellContent == null) {
-//            return '';
-//          } else if (cellContent.runtimeType == String) {
-//            return cellContent;
-//          } else if (cellContent.runtimeType == int ||
-//              cellContent.runtimeType == double) {
-//            return cellContent.toString().replaceAll(
-//              RegExp(r"([.]*0)(?!.*\d)"),
-//              '',
-//            );
-//          } else {
-//            return '<?>';
-//          }
-//        }
-//      }
     }
   }
-
-//  Widget textList(
-//    String text, {
-//    @required double fontSize,
-//    Color color,
-//  }) {
-//    List<String> words = text.trim().split(RegExp(r"\s+"));
-//    List<Widget> textWidgets = [];
-//    for (int i = 0; i < words.length; i++) {
-//      textWidgets.add(Flexible(
-//        child: Text(
-//          words[i] + (i == words.length ? '' : ' '),
-//          maxLines: 1,
-//          textAlign: textAlign,
-//          overflow: TextOverflow.ellipsis,
-//          style: TextStyle(
-//            color: color ?? Colors.black,
-//            fontSize: fontSize,
-//            fontWeight: fontWeight,
-//          ),
-//        ),
-//      ));
-//    }
-//    return Row(
-//      children: textWidgets,
-//    );
-//  }
 
   @override
   Widget build(BuildContext context) {
     String text = fittedTextText();
-    String label = fittedTextText(true);
+    String label = !includeTooltipLabel ? '' : fittedTextText(true);
 
-    return Tooltip(
-      message: label + text,
-      child: includeLabel
-          ?
-//      textList(
-//              text,
-//              fontSize: fontSize,
-//            )
-          RichText(
-              maxLines: 1,
-              textAlign: textAlign,
-              overflow: TextOverflow.ellipsis,
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: label,
+    Widget textWidget = Text.rich(
+      TextSpan(
+        children: linkify(text)
+            .map<TextSpan>((e) => (e is LinkableElement)
+                ? TextSpan(
+                    text: e.text,
                     style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: fontSize / 1.5,
-                      fontWeight: fontWeight,
+                      color:
+                          linkIsColored ? Theme.of(context).primaryColor : null,
+                      decoration: TextDecoration.underline,
                     ),
-                  ),
-                  TextSpan(
-                    text: text,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: fontSize,
-                      fontWeight: fontWeight,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          :
-//      textList(
-//              text,
-//              fontSize: fontSize,
-//            ),
-          Text(
-              text,
-              maxLines: 1,
-              textAlign: textAlign,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: fontSize,
-                fontWeight: fontWeight,
-              ),
-            ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () async {
+                        await TryCatch.open(context, e.url);
+                      },
+                  )
+                : TextSpan(
+                    text: e.text,
+                  ))
+            .toList(),
+      ),
+      maxLines: infiniteLines ? null : 1,
+      overflow: infiniteLines ? null : TextOverflow.ellipsis,
+      textAlign: textAlign,
+      style: TextStyle(
+        color: textColor,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+      ),
     );
-//    return FittedBox(
-//      alignment: Alignment.center,
-//      fit: BoxFit.scaleDown,
-//      child: ConstrainedBox(
-//        constraints: BoxConstraints(
-//          minWidth: 1.0,
-//        ),
-//        child: Text(
-//          fittedTextText(),
-//          style: TextStyle(
-//            fontSize: fontSize,
-//            fontWeight: fontWeight,
-//          ),
-//        ),
-//      ),
-//    );
+
+    return infiniteLines
+        ? textWidget
+        : Tooltip(
+            message: label + text,
+            child: textWidget,
+          );
   }
 }

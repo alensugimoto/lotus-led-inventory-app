@@ -12,12 +12,11 @@ class Result extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          FittedText(
-            filteredLights,
-            row: this.index,
-            column: 0,
-          ).fittedTextText(),
+        title: FittedText(
+          filteredLights,
+          row: this.index,
+          column: 0,
+          linkIsColored: false,
         ),
       ),
       body: Container(
@@ -36,16 +35,13 @@ class Result extends StatelessWidget {
             )
                 ? Container()
                 : ListTile(
-                    title: Text(
-                      FittedText(
-                        filteredLights,
-                        row: this.index,
-                        column: index,
-                      ).fittedTextText(),
-                      style: TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    title: FittedText(
+                      filteredLights,
+                      row: this.index,
+                      column: index,
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.w500,
+                      infiniteLines: true,
                     ),
                     subtitle: FittedText(
                       filteredLights,
@@ -55,16 +51,13 @@ class Result extends StatelessWidget {
                       end: index + 1,
                     )
                         ? Container()
-                        : Text(
-                            FittedText(
-                              filteredLights,
-                              row: 0,
-                              column: index,
-                            ).fittedTextText(),
-                            style: TextStyle(
-                              fontSize: 13.0,
-                              fontWeight: FontWeight.w400,
-                            ),
+                        : FittedText(
+                            filteredLights,
+                            row: 0,
+                            column: index,
+                            fontSize: 13.0,
+                            fontWeight: FontWeight.w400,
+                            infiniteLines: true,
                           ),
                   );
           },

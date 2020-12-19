@@ -48,27 +48,29 @@ class _ResultsState extends State<Results>
   }
 
   Widget _scrollToTopButton() {
-    return Container(
-      padding: EdgeInsets.all(5.0),
-      alignment: Alignment.bottomCenter,
-      child: Padding(
-        padding: EdgeInsets.all(10.0),
-        child: MaterialButton(
-          onPressed: () {
-            _scrollController.animateTo(
-              0.0,
-              duration: Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          },
-          color: Colors.grey[300],
-          textColor: Colors.black,
-          child: Icon(
-            Icons.arrow_upward,
-            size: 24,
-          ),
+    return SafeArea(
+      child: Container(
+        padding: EdgeInsets.all(5.0),
+        alignment: Alignment.bottomCenter,
+        child: Padding(
           padding: EdgeInsets.all(10.0),
-          shape: CircleBorder(),
+          child: MaterialButton(
+            onPressed: () {
+              _scrollController.animateTo(
+                0.0,
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            },
+            color: Colors.grey[300],
+            textColor: Colors.black,
+            child: Icon(
+              Icons.arrow_upward,
+              size: 24,
+            ),
+            padding: EdgeInsets.all(10.0),
+            shape: CircleBorder(),
+          ),
         ),
       ),
     );
@@ -261,19 +263,11 @@ class _ResultsState extends State<Results>
                                   padding: EdgeInsets.symmetric(
                                     vertical: SPACING / 2,
                                   ),
-                                  child: RichText(
-                                    text: TextSpan(
-                                      style: DefaultTextStyle.of(context).style,
-                                      children: <TextSpan>[
-                                        TextSpan(
-                                          text: FittedText(
-                                            widget._filteredResults,
-                                            row: index,
-                                            column: 2,
-                                          ).fittedTextText(),
-                                        ),
-                                      ],
-                                    ),
+                                  child: FittedText(
+                                    widget._filteredResults,
+                                    row: index,
+                                    column: 2,
+                                    infiniteLines: true,
                                   ),
                                 ),
                           cellsRestAreEmpty
@@ -294,20 +288,11 @@ class _ResultsState extends State<Results>
                                     vertical: SPACING / 2,
                                   ),
                                   child: link == null || cell1HeaderIsEmpty
-                                      ? RichText(
-                                          text: TextSpan(
-                                            style: DefaultTextStyle.of(context)
-                                                .style,
-                                            children: <TextSpan>[
-                                              TextSpan(
-                                                text: FittedText(
-                                                  widget._filteredResults,
-                                                  row: index,
-                                                  column: 1,
-                                                ).fittedTextText(),
-                                              ),
-                                            ],
-                                          ),
+                                      ? FittedText(
+                                          widget._filteredResults,
+                                          row: index,
+                                          column: 1,
+                                          infiniteLines: true,
                                         )
                                       : InkWell(
                                           onTap: () async {
@@ -325,27 +310,14 @@ class _ResultsState extends State<Results>
                                                   BorderRadius.circular(5.0),
                                             ),
                                             child: Center(
-                                              child: Tooltip(
-                                                message: FittedText(
-                                                  widget._filteredResults,
-                                                  row: 0,
-                                                  column: 1,
-                                                ).fittedTextText(),
-                                                child: Text(
-                                                  FittedText(
-                                                    widget._filteredResults,
-                                                    row: 0,
-                                                    column: 1,
-                                                  ).fittedTextText(),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.w900,
-                                                  ),
-                                                  textAlign: TextAlign.center,
-                                                ),
+                                              child: FittedText(
+                                                widget._filteredResults,
+                                                row: 0,
+                                                column: 1,
+                                                fontWeight: FontWeight.w900,
+                                                textAlign: TextAlign.center,
+                                                textColor: Colors.white,
+                                                includeTooltipLabel: false,
                                               ),
                                             ),
                                           ),
