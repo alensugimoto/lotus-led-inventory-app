@@ -10,7 +10,7 @@ import 'app.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FlutterDownloader.initialize(
-      debug: false,
+    debug: true, // optional: set false to disable printing logs to console
   );
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -22,8 +22,7 @@ void main() async {
   ]);
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.dumpErrorToConsole(details);
-    if (kReleaseMode)
-      exit(1);
+    if (kReleaseMode) exit(1);
   };
   runApp(App());
 }
