@@ -1,13 +1,7 @@
-import 'dart:io';
-
 import 'package:enum_to_string/enum_to_string.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:linkify/linkify.dart';
-import 'package:lotus_led_inventory/screens/inventory/download.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../model/try_catch.dart';
@@ -183,10 +177,7 @@ class _ResultsState extends State<Results>
             EnumToString.convertToString(LinkOption.download),
           );
         }
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MyHomePage(title: 'Downloader')),
-        );
+        // TODO
         break;
       case LinkOption.launch:
         if (_isSelected && linkOption == null) {
@@ -198,52 +189,6 @@ class _ResultsState extends State<Results>
         await TryCatch.open(context, url);
         break;
     }
-  }
-
-  Future<void> _download(String url) async {
-    final _permissionReady = await _checkPermission();
-
-    if (_permissionReady) {
-      final _localPath =
-          (await _findLocalPath()) + Platform.pathSeparator + 'Download';
-
-      final savedDir = Directory(_localPath);
-      bool hasExisted = await savedDir.exists();
-      if (!hasExisted) {
-        savedDir.create();
-      }
-
-      await FlutterDownloader.enqueue(
-        url: url,
-        savedDir: _localPath,
-        showNotification: true,
-        openFileFromNotification: true,
-      );
-    }
-  }
-
-  Future<bool> _checkPermission() async {
-    if (Platform.isAndroid) {
-      final status = await Permission.storage.status;
-      if (status != PermissionStatus.granted) {
-        final result = await Permission.storage.request();
-        if (result == PermissionStatus.granted) {
-          return true;
-        }
-      } else {
-        return true;
-      }
-    } else {
-      return true;
-    }
-    return false;
-  }
-
-  Future<String> _findLocalPath() async {
-    final directory = Platform.isAndroid
-        ? await getExternalStorageDirectory()
-        : await getApplicationDocumentsDirectory();
-    return directory.path;
   }
 
   @override
