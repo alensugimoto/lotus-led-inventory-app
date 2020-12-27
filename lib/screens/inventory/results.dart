@@ -90,6 +90,74 @@ class _ResultsState extends State<Results>
     return elink;
   }
 
+  Widget linkifiedDescription({
+    @required int index,
+    @required int column,
+  }) {
+    String link = extractLink(
+      FittedText(
+        widget._filteredResults,
+        row: index,
+        column: column,
+      ).fittedTextText(),
+    );
+    return link == null &&
+            FittedText(
+              widget._filteredResults,
+              row: index,
+            ).checkIsEmpty(
+              start: column,
+              end: column + 1,
+            )
+        ? Container()
+        : Padding(
+            padding: EdgeInsets.symmetric(
+              vertical: SPACING / 2,
+            ),
+            child: link == null ||
+                    FittedText(
+                      widget._filteredResults,
+                      row: 0,
+                    ).checkIsEmpty(
+                      start: column,
+                      end: column + 1,
+                    )
+                ? FittedText(
+                    widget._filteredResults,
+                    row: index,
+                    column: column,
+                    infiniteLines: true,
+                  )
+                : InkWell(
+                    onTap: () async {
+                      await TryCatch.open(context, link);
+                    },
+                    child: Ink(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(
+                        vertical: SPACING / 2,
+                        horizontal: SPACING,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey,
+                        borderRadius: BorderRadius.circular(5.0),
+                      ),
+                      child: Center(
+                        child: FittedText(
+                          widget._filteredResults,
+                          row: 0,
+                          column: column,
+                          fontWeight: FontWeight.w900,
+                          textAlign: TextAlign.center,
+                          textColor: Colors.white,
+                          includeTooltipLabel: false,
+                        ),
+                      ),
+                    ),
+                  ),
+          );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -131,27 +199,6 @@ class _ResultsState extends State<Results>
                 ).checkIsEmpty(
                   end: 1,
                 );
-                bool cell1IsEmpty = FittedText(
-                  widget._filteredResults,
-                  row: index,
-                ).checkIsEmpty(
-                  start: 1,
-                  end: 2,
-                );
-                bool cell1HeaderIsEmpty = FittedText(
-                  widget._filteredResults,
-                  row: 0,
-                ).checkIsEmpty(
-                  start: 1,
-                  end: 2,
-                );
-                bool cell2IsEmpty = FittedText(
-                  widget._filteredResults,
-                  row: index,
-                ).checkIsEmpty(
-                  start: 2,
-                  end: 3,
-                );
                 bool cell3IsEmpty = FittedText(
                   widget._filteredResults,
                   row: index,
@@ -164,13 +211,6 @@ class _ResultsState extends State<Results>
                   row: index,
                 ).checkIsEmpty(
                   start: 4,
-                );
-                String link = extractLink(
-                  FittedText(
-                    widget._filteredResults,
-                    row: index,
-                    column: 1,
-                  ).fittedTextText(),
                 );
 
                 return InkWell(
@@ -257,19 +297,10 @@ class _ResultsState extends State<Results>
                                               ],
                                             ),
                                 ),
-                          cell2IsEmpty
-                              ? Container()
-                              : Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: SPACING / 2,
-                                  ),
-                                  child: FittedText(
-                                    widget._filteredResults,
-                                    row: index,
-                                    column: 2,
-                                    infiniteLines: true,
-                                  ),
-                                ),
+                          linkifiedDescription(
+                            index: index,
+                            column: 2,
+                          ),
                           cellsRestAreEmpty
                               ? Container()
                               : Padding(
@@ -281,48 +312,10 @@ class _ResultsState extends State<Results>
                                     widget._filteredResults,
                                   ),
                                 ),
-                          link == null && cell1IsEmpty
-                              ? Container()
-                              : Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: SPACING / 2,
-                                  ),
-                                  child: link == null || cell1HeaderIsEmpty
-                                      ? FittedText(
-                                          widget._filteredResults,
-                                          row: index,
-                                          column: 1,
-                                          infiniteLines: true,
-                                        )
-                                      : InkWell(
-                                          onTap: () async {
-                                            await TryCatch.open(context, link);
-                                          },
-                                          child: Ink(
-                                            width: double.infinity,
-                                            padding: EdgeInsets.symmetric(
-                                              vertical: SPACING / 2,
-                                              horizontal: SPACING,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey,
-                                              borderRadius:
-                                                  BorderRadius.circular(5.0),
-                                            ),
-                                            child: Center(
-                                              child: FittedText(
-                                                widget._filteredResults,
-                                                row: 0,
-                                                column: 1,
-                                                fontWeight: FontWeight.w900,
-                                                textAlign: TextAlign.center,
-                                                textColor: Colors.white,
-                                                includeTooltipLabel: false,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                ),
+                          linkifiedDescription(
+                            index: index,
+                            column: 1,
+                          ),
                         ],
                       ),
                     ),
