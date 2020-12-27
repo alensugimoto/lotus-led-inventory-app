@@ -299,7 +299,7 @@ class _ResultsState extends State<Results>
                                 ),
                           linkifiedDescription(
                             index: index,
-                            column: 2,
+                            column: 1,
                           ),
                           cellsRestAreEmpty
                               ? Container()
@@ -314,7 +314,7 @@ class _ResultsState extends State<Results>
                                 ),
                           linkifiedDescription(
                             index: index,
-                            column: 1,
+                            column: 2,
                           ),
                         ],
                       ),
