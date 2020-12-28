@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
+import 'package:lotus_led_inventory/model/shared_prefs.dart';
 import 'package:lotus_led_inventory/model/try_catch.dart';
 import 'package:meta/meta.dart';
 import 'package:mime_type/mime_type.dart';
@@ -13,7 +14,7 @@ import 'package:http/http.dart' as http;
 
 import '../../model/file_data.dart';
 import '../../model/try_catch.dart';
-import 'inventory.dart';
+import 'home.dart';
 
 class Dropbox extends StatelessWidget {
   final String filePath;
@@ -303,13 +304,14 @@ class Dropbox extends StatelessWidget {
                                       );
 
                                       if (fileData != null) {
+                                        final files =
+                                            await SharedPrefs.getFiles();
                                         Navigator.of(
                                           context,
                                         ).pushAndRemoveUntil(
                                           MaterialPageRoute(
-                                            builder: (context) => Inventory(
-                                              fileData,
-                                            ),
+                                            builder: (context) =>
+                                                Home(files..add(fileData)),
                                           ),
                                           (route) => false,
                                         );

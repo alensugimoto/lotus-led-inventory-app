@@ -4,13 +4,14 @@ import 'dart:io';
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:lotus_led_inventory/model/shared_prefs.dart';
 import 'package:lotus_led_inventory/model/try_catch.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:oauth2_client/oauth2_helper.dart';
 import 'package:oauth2_client/google_oauth2_client.dart';
 
 import '../../model/try_catch.dart';
-import 'inventory.dart';
+import 'home.dart';
 import '../../model/file_data.dart';
 
 class GoogleDrive extends StatelessWidget {
@@ -277,13 +278,14 @@ class GoogleDrive extends StatelessWidget {
                                     );
 
                                     if (fileData != null) {
+                                      final files =
+                                          await SharedPrefs.getFiles();
                                       Navigator.of(
                                         context,
                                       ).pushAndRemoveUntil(
                                         MaterialPageRoute(
-                                          builder: (context) => Inventory(
-                                            fileData,
-                                          ),
+                                          builder: (context) =>
+                                              Home(files..add(fileData)),
                                         ),
                                         (route) => false,
                                       );
