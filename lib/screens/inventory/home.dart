@@ -25,24 +25,26 @@ import '../../model/file_data.dart';
 import '../../model/spreadsheet.dart';
 import '../../model/sheet.dart';
 
-class Inventory extends StatefulWidget {
-  final FileData file;
+class Home extends StatefulWidget {
+  final List<FileData> files;
 
-  Inventory(this.file);
+  Home(this.files);
 
   @override
-  InventoryState createState() => InventoryState();
+  HomeState createState() => HomeState();
 }
 
-class InventoryState extends State<Inventory> with TickerProviderStateMixin {
+class HomeState extends State<Home> with TickerProviderStateMixin {
   bool speedDialIsOpen;
-  String dateTime;
   SnackBar snackBar;
   bool isLoading;
+  int selectedIndex;
+  FileData file;
+
+  static Spreadsheet spread;
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _refreshKey = GlobalKey<RefreshIndicatorState>();
-  static Spreadsheet spread;
   final List<ProviderData> _providers = [
     ProviderData(
       name: GoogleDrive.NAME,
@@ -130,9 +132,10 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
     final fileData = await _getFutureFileDataWithFilePicker();
 
     if (fileData != null) {
+      final files = await SharedPrefs.getFiles();
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (context) => Inventory(fileData),
+          builder: (context) => Home(files..add(fileData)),
         ),
         (route) => false,
       );
@@ -204,22 +207,25 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
+    selectedIndex = widget.files.length - 1;
+    file = widget.files.isEmpty
+        ? FileData.fromJson({})
+        : widget.files[selectedIndex];
     speedDialIsOpen = false;
-    dateTime = widget.file.dateTime;
     isLoading = false;
 
-    if (widget.file.bytes != null) {
-      spread = getSpread(widget.file.bytes);
+    if (file.bytes != null) {
+      spread = getSpread(file.bytes);
     }
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
         await refreshReminder(() async {
           int snooze = await getSnoozeInSeconds();
-          if (dateTime != null && snooze != 0 && widget.file.provider != null) {
+          if (file.dateTime != null && snooze != 0 && file.provider != null) {
             int seconds = DateTime.now()
                 .difference(
-                  DateTime.parse(dateTime),
+                  DateTime.parse(file.dateTime),
                 )
                 .inSeconds;
             if (seconds >= snooze) {
@@ -241,10 +247,29 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
     );
   }
 
+  void _setSelectedIndex(int index) {
+    setState(() {
+      selectedIndex = index;
+      file = widget.files[selectedIndex];
+      if (file.bytes != null) {
+        spread = getSpread(file.bytes);
+      }
+    });
+  }
+
+  void _setFile(FileData newFile) {
+    setState(() {
+      file = newFile;
+      if (file.bytes != null) {
+        spread = getSpread(file.bytes);
+      }
+    });
+  }
+
   Spreadsheet getSpread(List<int> bytes) {
     Map<String, Sheet> sheets = {};
 
-    switch (extensionFromMime(widget.file.mimeType)) {
+    switch (extensionFromMime(file.mimeType)) {
       case 'htm':
       case 'html':
         {
@@ -298,14 +323,14 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
   Future<void> setSpread() async {
     FileData fileData;
 
-    switch (widget.file.provider) {
+    switch (file.provider) {
       case 'Google':
         {
           fileData = await GoogleDrive.download(
-            name: widget.file.name,
-            provider: widget.file.provider,
-            fileId: widget.file.id,
-            mime: widget.file.mimeType,
+            name: file.name,
+            provider: file.provider,
+            fileId: file.id,
+            mime: file.mimeType,
           );
         }
         break;
@@ -313,10 +338,10 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       case 'Dropbox':
         {
           fileData = await Dropbox.download(
-            fileName: widget.file.name,
-            provider: widget.file.provider,
-            dropboxPath: widget.file.id,
-            mime: widget.file.mimeType,
+            fileName: file.name,
+            provider: file.provider,
+            dropboxPath: file.id,
+            mime: file.mimeType,
           );
         }
         break;
@@ -328,10 +353,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
         duration: Duration(seconds: 2),
       )..show(context);
     } else {
-      setState(() {
-        spread = getSpread(fileData.bytes);
-        dateTime = fileData.dateTime;
-      });
+      _setFile(fileData);
     }
   }
 
@@ -350,7 +372,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
     _scaffoldKey.currentState?.removeCurrentSnackBar();
     int snooze = await getSnoozeInSeconds();
 
-    if (snooze != 0 && widget.file.provider != null) {
+    if (snooze != 0 && file.provider != null) {
       Future.delayed(
         Duration(seconds: snooze),
         () async {
@@ -384,9 +406,9 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
 
   Widget title() {
     String timestamp = 'Updated: ${DateFormat.Hm().format(
-      DateTime.parse(dateTime),
+      DateTime.parse(file.dateTime),
     )} ${DateFormat('d MMM y').format(
-      DateTime.parse(dateTime),
+      DateTime.parse(file.dateTime),
     )}';
 
     return Column(
@@ -394,8 +416,8 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Tooltip(
-          message: widget.file.name,
-          child: Text(widget.file.name),
+          message: file.name,
+          child: Text(file.name),
         ),
         Tooltip(
           message: timestamp,
@@ -448,7 +470,25 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
 
     return !enabled
         ? [search, refresh]
-        : widget.file.provider == null ? [search] : [search, refresh];
+        : file.provider == null
+            ? [search]
+            : [search, refresh];
+  }
+
+  BottomNavigationBar bottomNavigationBar() {
+    return widget.files.length < 2
+        ? null
+        : BottomNavigationBar(
+            items: widget.files
+                .map((file) => BottomNavigationBarItem(
+                      icon: Icon(IconData(file.name.codeUnits.first)),
+                      label: file.name,
+                    ))
+                .toList(),
+            currentIndex: selectedIndex,
+            selectedItemColor: Theme.of(context).primaryColor,
+            onTap: _setSelectedIndex,
+          );
   }
 
   @override
@@ -460,6 +500,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
             body: Center(
               child: CircularProgressIndicator(),
             ),
+            bottomNavigationBar: bottomNavigationBar(),
           )
         : spread == null
             ? Scaffold(
@@ -518,6 +559,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
                   ),
                 ),
                 floatingActionButton: speedDial(),
+                bottomNavigationBar: bottomNavigationBar(),
               )
             : DefaultTabController(
                 length: spread.tables.keys.length,
@@ -550,6 +592,7 @@ class InventoryState extends State<Inventory> with TickerProviderStateMixin {
                     ),
                   ),
                   floatingActionButton: speedDial(),
+                  bottomNavigationBar: bottomNavigationBar(),
                 ),
               );
   }
@@ -641,18 +684,18 @@ class CustomSearchDelegate extends SearchDelegate<Map<String, String>> {
   Widget buildResults(BuildContext context) {
     List<List<dynamic>> filteredResults = [];
 
-    for (var key in InventoryState.spread.tables.keys) {
-      for (int i = 0; i < InventoryState.spread.tables[key].rows.length; i++) {
+    for (var key in HomeState.spread.tables.keys) {
+      for (int i = 0; i < HomeState.spread.tables[key].rows.length; i++) {
         if (query.isNotEmpty) {
           if (i == 0) {
-            filteredResults.add(InventoryState.spread.tables[key].rows[i]);
+            filteredResults.add(HomeState.spread.tables[key].rows[i]);
           } else {
             if (queryIsMatching(
               i,
-              spread: InventoryState.spread,
+              spread: HomeState.spread,
               table: key,
             )) {
-              filteredResults.add(InventoryState.spread.tables[key].rows[i]);
+              filteredResults.add(HomeState.spread.tables[key].rows[i]);
             }
           }
         }
@@ -666,16 +709,15 @@ class CustomSearchDelegate extends SearchDelegate<Map<String, String>> {
   Widget buildSuggestions(BuildContext context) {
     List<List<dynamic>> filteredSuggestions = [[]];
 
-    for (var key in InventoryState.spread.tables.keys) {
-      for (int i = 1; i < InventoryState.spread.tables[key].rows.length; i++) {
+    for (var key in HomeState.spread.tables.keys) {
+      for (int i = 1; i < HomeState.spread.tables[key].rows.length; i++) {
         if (query.isNotEmpty) {
           if (queryIsMatching(
             i,
-            spread: InventoryState.spread,
+            spread: HomeState.spread,
             table: key,
           )) {
-            filteredSuggestions[0]
-                .add(InventoryState.spread.tables[key].rows[i][0]);
+            filteredSuggestions[0].add(HomeState.spread.tables[key].rows[i][0]);
           }
         }
       }

@@ -1,14 +1,11 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:lotus_led_inventory/model/file_data.dart';
-import 'package:lotus_led_inventory/model/shared_prefs.dart';
-import 'package:lotus_led_inventory/screens/about_app/about_app.dart';
-import 'package:lotus_led_inventory/screens/help_and_support/help_and_support.dart';
-import 'package:lotus_led_inventory/screens/inventory/inventory.dart';
-import 'package:lotus_led_inventory/screens/settings/settings.dart';
-import 'package:lotus_led_inventory/screens/welcome/policies.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../model/shared_prefs.dart';
+import '../screens/about_app/about_app.dart';
+import '../screens/help_and_support/help_and_support.dart';
+import '../screens/inventory/home.dart';
+import '../screens/settings/settings.dart';
+import '../screens/welcome/policies.dart';
 
 class AppDrawer extends StatefulWidget {
   @override
@@ -54,16 +51,10 @@ class _AppDrawerState extends State<AppDrawer> {
                     onTap: () async {
                       setState(() => isLoading = true);
 
-                      final prefs = await SharedPreferences.getInstance();
-                      final jsonString = prefs.getString(SharedPrefs.FILE);
-
+                      final files = await SharedPrefs.getFiles();
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
-                          builder: (context) => Inventory(
-                            FileData.fromJson(
-                              jsonString == null ? {} : json.decode(jsonString),
-                            ),
-                          ),
+                          builder: (context) => Home(files),
                         ),
                       );
 
