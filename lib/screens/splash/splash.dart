@@ -1,10 +1,13 @@
+import 'dart:convert';
+
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../inventory/inventory.dart';
 import '../welcome/welcome.dart';
+import '../../model/file_data.dart';
 import '../../model/shared_prefs.dart';
-import '../inventory/home.dart';
 
 class Splash extends StatefulWidget {
   @override
@@ -17,10 +20,15 @@ class _SplashState extends State<Splash> with AfterLayoutMixin<Splash> {
     final _gotStarted = prefs.getBool(SharedPrefs.GOT_STARTED) ?? false;
 
     if (_gotStarted) {
-      final files = await SharedPrefs.getFiles();
+      final jsonString = prefs.getString(SharedPrefs.FILE);
+
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => Home(files),
+          builder: (context) => Inventory(
+            FileData.fromJson(
+              jsonString == null ? {} : json.decode(jsonString),
+            ),
+          ),
         ),
       );
     } else {

@@ -26,17 +26,12 @@ class FileData {
     @required this.dateTime,
   });
 
-  factory FileData.fromJson(Map<String, dynamic> json) =>
-      _$FileDataFromJson(json);
+  factory FileData.fromJson(Map<String, dynamic> json) => _$FileDataFromJson(json);
 
   Map<String, dynamic> toJson() => _$FileDataToJson(this);
 
   Future<void> save() async {
     final prefs = await SharedPreferences.getInstance();
-    final newList = (prefs.getStringList(SharedPrefs.FILES) ?? [])
-      ..add(
-        json.encode(toJson()),
-      );
-    await prefs.setStringList(SharedPrefs.FILES, newList);
+    await prefs.setString(SharedPrefs.FILE, json.encode(toJson()));
   }
 }
