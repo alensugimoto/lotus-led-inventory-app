@@ -2,7 +2,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:linkify/linkify.dart';
-import 'package:lotus_led_inventory/model/try_catch.dart';
+
+import '../../model/try_catch.dart';
 
 class FittedText extends StatelessWidget {
   final List<List<dynamic>> filteredResults;

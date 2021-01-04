@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:lotus_led_inventory/model/links.dart';
 
+import '../../model/links.dart';
 import '../../model/try_catch.dart';
 
 class Policies extends StatelessWidget {

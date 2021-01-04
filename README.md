@@ -1,4 +1,4 @@
-# The Lotus LED Inventory App
+# The Lotus LED Lights App
 
 This app turns files containing tables into simple, searchable, syncable lists of data.
 
@@ -12,7 +12,7 @@ Download the app on the [App Store](https://apps.apple.com/us/app/id1528472145) 
 
 ### Policies
 
-By using this app, you are agreeing to our [Terms and Conditions](https://alensugimoto.github.io/lotus-led-inventory-app/terms-and-conditions) and [Privacy Policy](https://alensugimoto.github.io/lotus-led-inventory-app/privacy-policy).
+By using this app, you are agreeing to our [Terms and Conditions](https://alensugimoto.github.io/lotus-led-lights-app/terms-and-conditions) and [Privacy Policy](https://alensugimoto.github.io/lotus-led-inventory-app/privacy-policy).
 
 ### Trademark Notices
 

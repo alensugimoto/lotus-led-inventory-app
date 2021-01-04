@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:lotus_led_inventory/app_drawer/app_drawer.dart';
-import 'package:lotus_led_inventory/model/links.dart';
-import 'package:lotus_led_inventory/screens/about_app/package_info_tile.dart';
 
+import '../../app_drawer/app_drawer.dart';
+import '../../model/links.dart';
+import 'package_info_tile.dart';
 import '../../app.dart';
 import '../../model/try_catch.dart';
 

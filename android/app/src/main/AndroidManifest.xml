@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="Lotus LED Inventory"
+        android:label="Lotus LED Lights"
         android:requestLegacyExternalStorage="true"
         android:allowBackup="false"
         android:fullBackupContent="false"

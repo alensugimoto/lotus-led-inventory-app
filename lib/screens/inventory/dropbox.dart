@@ -3,8 +3,6 @@ import 'dart:async';
 
 import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
-import 'package:lotus_led_inventory/model/shared_prefs.dart';
-import 'package:lotus_led_inventory/model/try_catch.dart';
 import 'package:meta/meta.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:oauth2_client/oauth2_client.dart';
@@ -12,6 +10,7 @@ import 'package:oauth2_client/oauth2_helper.dart';
 import 'package:path/path.dart' as p;
 import 'package:http/http.dart' as http;
 
+import '../../model/shared_prefs.dart';
 import '../../model/file_data.dart';
 import '../../model/try_catch.dart';
 import 'home.dart';

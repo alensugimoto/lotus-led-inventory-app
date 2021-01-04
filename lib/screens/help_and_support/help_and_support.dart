@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lotus_led_inventory/app_drawer/app_drawer.dart';
-import 'package:lotus_led_inventory/model/links.dart';
 
+import '../../app_drawer/app_drawer.dart';
+import '../../model/links.dart';
 import '../../app.dart';
 import 'contact_info_tile.dart';
 
@@ -21,7 +21,7 @@ class HelpAndSupport extends StatelessWidget {
             title: Padding(
               padding: EdgeInsets.symmetric(vertical: 10.0),
               child: Text(
-                'View Lotus LED Lights\' Models, Inventory, and Prices',
+                'View Lotus LED Lights Inc.\'s Models, Inventory, and Prices',
               ),
             ),
             onTap: showRequestMethods,
@@ -91,7 +91,7 @@ class HelpAndSupport extends StatelessWidget {
     showDialog(
       context: App.navigatorKey.currentState.overlay.context,
       builder: (context) => AlertDialog(
-        title: Text('View Lotus LED Lights\' Models, Inventory, and Prices'),
+        title: Text('View Lotus LED Lights Inc.\'s Models, Inventory, and Prices'),
         content: Container(
           width: double.maxFinite,
           child: ListView(
@@ -99,7 +99,7 @@ class HelpAndSupport extends StatelessWidget {
             shrinkWrap: true,
             children: [
               Text(
-                'To request access to Lotus LED Lights\' models, inventory, '
+                'To request access to Lotus LED Lights Inc.\'s models, inventory, '
                 'and prices, please use your work '
                 'email address to send an email to ...',
               ),

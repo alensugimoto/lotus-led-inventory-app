@@ -34,7 +34,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 children: <Widget>[
                   ListTile(
                     title: Text(
-                      'Lotus LED Inventory',
+                      'Lotus LED Lights',
                       style: TextStyle(
                         color: Theme.of(context).primaryColor,
                         fontSize: 20.0,

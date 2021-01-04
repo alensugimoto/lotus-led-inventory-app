@@ -5,15 +5,16 @@ import 'package:flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
 import 'package:intl/intl.dart';
-import 'package:lotus_led_inventory/model/provider_data.dart';
-import 'package:lotus_led_inventory/model/shared_prefs.dart';
-import 'package:lotus_led_inventory/screens/help_and_support/help_and_support.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
 import 'package:path/path.dart' as p;
 
+
+import '../../model/provider_data.dart';
+import '../../model/shared_prefs.dart';
+import '../help_and_support/help_and_support.dart';
 import '../../app.dart';
 import '../../model/try_catch.dart';
 import '../../app_drawer/app_drawer.dart';
@@ -546,7 +547,7 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
                           ),
                           child: ListTile(
                             title: Text(
-                              'Want to have access to Lotus LED Lights\' models, '
+                              'Want to have access to Lotus LED Lights Inc.\'s models, '
                               'inventory, and prices but don\'t have permission? '
                               'Click this button for help.',
                             ),

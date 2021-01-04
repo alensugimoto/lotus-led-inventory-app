@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:lotus_led_inventory/app_drawer/app_drawer.dart';
-import 'package:lotus_led_inventory/screens/inventory/dropbox.dart';
-import 'package:lotus_led_inventory/screens/inventory/google_drive.dart';
-import 'package:lotus_led_inventory/screens/settings/custom_radio_tiles.dart';
-import 'package:lotus_led_inventory/screens/settings/custom_switch_tile.dart';
+
+import '../../app_drawer/app_drawer.dart';
+import '../inventory/dropbox.dart';
+import '../inventory/google_drive.dart';
+import 'custom_radio_tiles.dart';
+import 'custom_switch_tile.dart';
 
 class Settings extends StatelessWidget {
   @override

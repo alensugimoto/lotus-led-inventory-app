@@ -34,7 +34,7 @@ class Welcome extends StatelessWidget {
                     SizedBox(height: 5.0),
                     Flexible(
                       child: Text(
-                        'to the Lotus LED Inventory app!',
+                        'to the Lotus LED Lights app!',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 20.0,

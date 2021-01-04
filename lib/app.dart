@@ -9,7 +9,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Lotus LED Inventory',
+      title: 'Lotus LED Lights',
       navigatorKey: navigatorKey,
       theme: ThemeData(
         primarySwatch: Colors.green,
